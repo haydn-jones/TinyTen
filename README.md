@@ -1,2 +1,3 @@
 # TinyTen
-Small and simple N-Dimensional Tensor implementation in C++
+
+Small and simple, header-only, N-Dimensional Tensor implementation in C++.
