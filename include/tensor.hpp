@@ -45,6 +45,7 @@ class Tensor {
     void reshape(const IndexType& dimensions) {
         assert(cumprod(dimensions) == size());
         dimensions_ = dimensions;
+        calculate_strides();
     }
 
     // Indexing with multiple indices
@@ -59,25 +60,24 @@ class Tensor {
     }
 
     // Indexing with vector
-    auto operator()(const IndexType& indices) -> ValueType& {
+    constexpr auto operator()(const IndexType& indices) -> ValueType& {
         assert(indices.size() == dimensions_.size());
         return data_[flatten_index(indices)];
     }
 
-    auto operator()(const IndexType& indices) const -> const ValueType& {
+    constexpr auto operator()(const IndexType& indices) const -> const ValueType& {
         assert(indices.size() == dimensions_.size());
         return data_[flatten_index(indices)];
     }
 
-    // Indexing with multiple indices
     template <typename... Args>
-    auto operator()(Args... args) -> ValueType& {
+    constexpr auto operator()(Args... args) -> ValueType& {
         assert(sizeof...(args) == dimensions_.size());
         return data_[flatten_index({static_cast<SizeType>(args)...})];
     }
 
     template <typename... Args>
-    auto operator()(Args... args) const -> const ValueType& {
+    constexpr auto operator()(Args... args) const -> const ValueType& {
         assert(sizeof...(args) == dimensions_.size());
         return data_[flatten_index({args...})];
     }
@@ -90,11 +90,19 @@ class Tensor {
         return idx;
     }
 
+    template <typename... Args>
+    constexpr auto flatten_index(Args... args) const -> SizeType {
+        assert(sizeof...(args) == dimensions_.size());
+        return flatten_index({static_cast<SizeType>(args)...});
+    }
+
     // Iterators
     auto begin() noexcept { return data_.begin(); }
     auto begin() const noexcept { return data_.cbegin(); }
     auto end() noexcept { return data_.end(); }
     auto end() const noexcept { return data_.cend(); }
+
+    SizeType stride(int i) const { return strides_[i]; }
 
   private:
     ContainerType data_;
@@ -102,7 +110,9 @@ class Tensor {
     IndexType strides_;
 
     void calculate_strides() {
-        strides_.resize(dimensions_.size(), 1);
+        strides_.resize(dimensions_.size());
+        std::fill(strides_.begin(), strides_.end(), 1);
+
         for (int i = dimensions_.size() - 2; i >= 0; --i) {
             strides_[i] = strides_[i + 1] * dimensions_[i + 1];
         }

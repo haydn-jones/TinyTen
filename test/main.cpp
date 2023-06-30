@@ -72,10 +72,32 @@ TEST_CASE("Index flattening", "[Tensor]") {
     REQUIRE(ten1.flatten_index({0, 0, 0, 0}) == 0);
     REQUIRE(ten1.flatten_index({0, 0, 0, 1}) == 1);
     REQUIRE(ten1.flatten_index({0, 0, 0, 2}) == 2);
-
     REQUIRE(ten1.flatten_index({0, 0, 1, 0}) == 10);
     REQUIRE(ten1.flatten_index({0, 0, 1, 1}) == 11);
     REQUIRE(ten1.flatten_index({0, 0, 2, 6}) == 26);
-
     REQUIRE(ten1.flatten_index({0, 2, 4, 9}) == 149);
+
+    REQUIRE(ten1.flatten_index(0, 0, 0, 0) == 0);
+    REQUIRE(ten1.flatten_index(0, 0, 0, 1) == 1);
+    REQUIRE(ten1.flatten_index(0, 0, 0, 2) == 2);
+    REQUIRE(ten1.flatten_index(0, 0, 1, 0) == 10);
+    REQUIRE(ten1.flatten_index(0, 0, 1, 1) == 11);
+    REQUIRE(ten1.flatten_index(0, 0, 2, 6) == 26);
+    REQUIRE(ten1.flatten_index(0, 2, 4, 9) == 149);
+}
+
+TEST_CASE("Strides", "[Tensor]") {
+    Tensor<int> ten1({1, 3, 5, 10});
+
+    // ensure that the strides are correct
+    REQUIRE(ten1.stride(0) == 150);
+    REQUIRE(ten1.stride(1) == 50);
+    REQUIRE(ten1.stride(2) == 10);
+    REQUIRE(ten1.stride(3) == 1);
+
+    // Reshape the tensor
+    ten1.reshape({15, 2, 5});
+    REQUIRE(ten1.stride(0) == 10);
+    REQUIRE(ten1.stride(1) == 5);
+    REQUIRE(ten1.stride(2) == 1);
 }
