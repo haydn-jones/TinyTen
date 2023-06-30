@@ -36,3 +36,15 @@ TEST_CASE("Tensor operations", "[Tensor]") {
         }
     }
 }
+
+TEST_CASE("iot", "[Tensor]") {
+    using TensorType = Tensor<int>;
+    using IndexType = TensorType::IndexType;
+
+    auto tensor = TensorType::iota({2, 2});
+    REQUIRE(tensor.size() == 4);
+    REQUIRE(tensor[IndexType{0, 0}] == 0);
+    REQUIRE(tensor[IndexType{0, 1}] == 1);
+    REQUIRE(tensor[IndexType{1, 0}] == 2);
+    REQUIRE(tensor[IndexType{1, 1}] == 3);
+}

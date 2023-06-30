@@ -5,6 +5,10 @@
 #include <numeric>
 #include <vector>
 
+template <typename T> size_t cumprod(const std::vector<T>& v) {
+    return std::accumulate(v.begin(), v.end(), 1, std::multiplies<T>());
+}
+
 template <typename T> class Tensor {
   public:
     using ValueType = T;
@@ -19,8 +23,29 @@ template <typename T> class Tensor {
      * @param dimensions The dimensions of the tensor.
      */
     Tensor(const IndexType& dimensions) : dimensions_(dimensions) {
-        int total_size = std::accumulate(dimensions.begin(), dimensions.end(), 1, std::multiplies<int>());
+        size_t total_size = cumprod(dimensions);
         data_.resize(total_size);
+    }
+
+    /*
+     * @brief Construct a tensor with given dimensions and initialize with given value.
+     * @param dimensions The dimensions of the tensor.
+     * @param value The value to initialize the tensor with.
+     */
+    Tensor(const IndexType& dimensions, const ValueType& value) : dimensions_(dimensions) {
+        size_t total_size = cumprod(dimensions);
+        data_.resize(total_size, value);
+    }
+
+    /*
+     * @brief Construct a tensor with std::iota if the template parameter is an integral type.
+     * @param dimensions The dimensions of the tensor.
+     */
+    template <typename U = ValueType, typename = std::enable_if_t<std::is_integral_v<U>>>
+    static Tensor iota(const IndexType& dimensions) {
+        Tensor tensor(dimensions);
+        std::iota(tensor.begin(), tensor.end(), 0);
+        return tensor;
     }
 
     ValueType& operator[](const IndexType& indices) { return data_[flatten_index(indices)]; }
