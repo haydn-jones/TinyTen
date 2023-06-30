@@ -115,12 +115,12 @@ TEST_CASE("Sum", "[Tensor]") {
     REQUIRE(ten3(1, 1) == 4);
     REQUIRE(ten3(1, 2) == 5);
 
-    Tensor<int> ten4 = ten2 + ten2;
+    auto ten4 = ten2 + Tensor<float>::iota({2, 3});
 
-    REQUIRE(ten4(0, 0) == 0);
-    REQUIRE(ten4(0, 1) == 2);
-    REQUIRE(ten4(0, 2) == 4);
-    REQUIRE(ten4(1, 0) == 6);
-    REQUIRE(ten4(1, 1) == 8);
-    REQUIRE(ten4(1, 2) == 10);
+    REQUIRE(ten4(0, 0) == 0.0f);
+    REQUIRE(ten4(0, 1) == 2.0f);
+    REQUIRE(ten4(0, 2) == 4.0f);
+    REQUIRE(ten4(1, 0) == 6.0f);
+    REQUIRE(ten4(1, 1) == 8.0f);
+    REQUIRE(ten4(1, 2) == 10.0f);
 }

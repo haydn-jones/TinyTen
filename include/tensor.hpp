@@ -128,9 +128,12 @@ struct has_addition<T, U, std::void_t<decltype(std::declval<T>() + std::declval<
 
 // clang-format off
 template <typename T, typename U>
-auto constexpr operator+(const Tensor<T>& a, const Tensor<U>& b) -> typename std::enable_if<has_addition<T, U>::value, Tensor<T>>::type {
-    Tensor<T> result(a.shape());
-    std::transform(a.begin(), a.end(), b.begin(), result.begin(), std::plus<>());
+auto operator+(const Tensor<T>& a, const Tensor<U>& b) 
+    -> typename std::enable_if<has_addition<T, U>::value, Tensor<typename std::common_type<T, U>::type>>::type
+{
+    using otype = typename std::common_type<T, U>::type;
+    Tensor<otype> result(a.shape());
+    std::transform(a.begin(), a.end(), b.begin(), result.begin(), std::plus<otype>());
     return result;
 }
 // clang-format on
