@@ -30,9 +30,11 @@ class Tensor {
         std::fill(data_.begin(), data_.end(), value);
     }
 
-    static auto iota(const IndexType& dimensions) -> Tensor {
+    template <typename U = ValueType>
+    auto static iota(const IndexType& dimensions) -> Tensor {
+        U value{};
         Tensor tensor(dimensions);
-        std::iota(tensor.begin(), tensor.end(), static_cast<ValueType>(0));
+        std::generate(tensor.begin(), tensor.end(), [&value] { return value++; });
         return tensor;
     }
 
