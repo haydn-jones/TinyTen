@@ -5,11 +5,13 @@
 #include <numeric>
 #include <vector>
 
-template <typename T> size_t cumprod(const std::vector<T>& v) {
+template <typename T>
+constexpr auto cumprod(const std::vector<T>& v) -> T {
     return std::accumulate(v.begin(), v.end(), 1, std::multiplies<T>());
 }
 
-template <typename T> class Tensor {
+template <typename T>
+class Tensor {
   public:
     using ValueType = T;
     using ContainerType = std::vector<T>;
@@ -18,58 +20,89 @@ template <typename T> class Tensor {
 
     Tensor() = default;
 
-    /*
-     * @brief Construct a tensor with given dimensions. Data is initialized to zero.
-     * @param dimensions The dimensions of the tensor.
-     */
     Tensor(const IndexType& dimensions) : dimensions_(dimensions) {
         size_t total_size = cumprod(dimensions);
         data_.resize(total_size);
+        calculate_strides();
     }
 
-    /*
-     * @brief Construct a tensor with given dimensions and initialize with given value.
-     * @param dimensions The dimensions of the tensor.
-     * @param value The value to initialize the tensor with.
-     */
-    Tensor(const IndexType& dimensions, const ValueType& value) : dimensions_(dimensions) {
-        size_t total_size = cumprod(dimensions);
-        data_.resize(total_size, value);
+    Tensor(const IndexType& dimensions, const ValueType& value) : Tensor(dimensions) {
+        std::fill(data_.begin(), data_.end(), value);
     }
 
-    /*
-     * @brief Construct a tensor with std::iota if the template parameter is an integral type.
-     * @param dimensions The dimensions of the tensor.
-     */
-    template <typename U = ValueType, typename = std::enable_if_t<std::is_integral_v<U>>>
-    static Tensor iota(const IndexType& dimensions) {
+    static auto iota(const IndexType& dimensions) -> Tensor {
         Tensor tensor(dimensions);
-        std::iota(tensor.begin(), tensor.end(), 0);
+        std::iota(tensor.begin(), tensor.end(), static_cast<ValueType>(0));
         return tensor;
     }
 
-    ValueType& operator[](const IndexType& indices) { return data_[flatten_index(indices)]; }
+    auto size() const noexcept -> SizeType { return data_.size(); }
 
-    const ValueType& operator[](const IndexType& indices) const { return data_[flatten_index(indices)]; }
+    [[nodiscard]] auto shape() const noexcept -> IndexType { return dimensions_; }
 
-    SizeType size() const noexcept { return data_.size(); }
+    void reshape(const IndexType& dimensions) {
+        assert(cumprod(dimensions) == size());
+        dimensions_ = dimensions;
+    }
 
+    // Indexing with multiple indices
+    auto operator()(SizeType idx) -> ValueType& {
+        assert(idx < size());
+        return data_[idx];
+    }
+
+    auto operator()(SizeType idx) const -> const ValueType& {
+        assert(idx < size());
+        return data_[idx];
+    }
+
+    // Indexing with vector
+    auto operator()(const IndexType& indices) -> ValueType& {
+        assert(indices.size() == dimensions_.size());
+        return data_[flatten_index(indices)];
+    }
+
+    auto operator()(const IndexType& indices) const -> const ValueType& {
+        assert(indices.size() == dimensions_.size());
+        return data_[flatten_index(indices)];
+    }
+
+    // Indexing with multiple indices
+    template <typename... Args>
+    auto operator()(Args... args) -> ValueType& {
+        assert(sizeof...(args) == dimensions_.size());
+        return data_[flatten_index({static_cast<SizeType>(args)...})];
+    }
+
+    template <typename... Args>
+    auto operator()(Args... args) const -> const ValueType& {
+        assert(sizeof...(args) == dimensions_.size());
+        return data_[flatten_index({args...})];
+    }
+
+    constexpr auto flatten_index(const IndexType& indices) const -> SizeType {
+        SizeType idx = 0;
+        for (int i = indices.size() - 1; i >= 0; --i) {
+            idx += strides_[i] * indices[i];
+        }
+        return idx;
+    }
+
+    // Iterators
     auto begin() noexcept { return data_.begin(); }
-    auto begin() const noexcept { return data_.begin(); }
+    auto begin() const noexcept { return data_.cbegin(); }
     auto end() noexcept { return data_.end(); }
-    auto end() const noexcept { return data_.end(); }
+    auto end() const noexcept { return data_.cend(); }
 
   private:
     ContainerType data_;
     IndexType dimensions_;
+    IndexType strides_;
 
-    SizeType flatten_index(const IndexType& indices) const {
-        SizeType idx = 0;
-        SizeType stride = 1;
-        for (int i = indices.size() - 1; i >= 0; --i) {
-            idx += stride * indices[i];
-            stride *= dimensions_[i];
+    void calculate_strides() {
+        strides_.resize(dimensions_.size(), 1);
+        for (int i = dimensions_.size() - 2; i >= 0; --i) {
+            strides_[i] = strides_[i + 1] * dimensions_[i + 1];
         }
-        return idx;
     }
 };
