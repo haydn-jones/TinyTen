@@ -101,3 +101,26 @@ TEST_CASE("Strides", "[Tensor]") {
     REQUIRE(ten1.stride(1) == 5);
     REQUIRE(ten1.stride(2) == 1);
 }
+
+TEST_CASE("Sum", "[Tensor]") {
+    Tensor<int> ten1({2, 3});
+    Tensor<int> ten2 = Tensor<int>::iota({2, 3});
+
+    Tensor<int> ten3 = ten1 + ten2;
+
+    REQUIRE(ten3(0, 0) == 0);
+    REQUIRE(ten3(0, 1) == 1);
+    REQUIRE(ten3(0, 2) == 2);
+    REQUIRE(ten3(1, 0) == 3);
+    REQUIRE(ten3(1, 1) == 4);
+    REQUIRE(ten3(1, 2) == 5);
+
+    Tensor<int> ten4 = ten2 + ten2;
+
+    REQUIRE(ten4(0, 0) == 0);
+    REQUIRE(ten4(0, 1) == 2);
+    REQUIRE(ten4(0, 2) == 4);
+    REQUIRE(ten4(1, 0) == 6);
+    REQUIRE(ten4(1, 1) == 8);
+    REQUIRE(ten4(1, 2) == 10);
+}

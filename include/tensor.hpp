@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cassert>
 #include <numeric>
+#include <type_traits>
 #include <vector>
 
 template <typename T>
@@ -102,7 +103,7 @@ class Tensor {
     auto end() noexcept { return data_.end(); }
     auto end() const noexcept { return data_.cend(); }
 
-    SizeType stride(int i) const { return strides_[i]; }
+    auto stride(int i) const -> SizeType { return strides_[i]; }
 
   private:
     ContainerType data_;
@@ -118,3 +119,18 @@ class Tensor {
         }
     }
 };
+
+template <typename T, typename U, typename = std::void_t<>>
+struct has_addition : std::false_type {};
+
+template <typename T, typename U>
+struct has_addition<T, U, std::void_t<decltype(std::declval<T>() + std::declval<U>())>> : std::true_type {};
+
+// clang-format off
+template <typename T, typename U>
+auto constexpr operator+(const Tensor<T>& a, const Tensor<U>& b) -> typename std::enable_if<has_addition<T, U>::value, Tensor<T>>::type {
+    Tensor<T> result(a.shape());
+    std::transform(a.begin(), a.end(), b.begin(), result.begin(), std::plus<>());
+    return result;
+}
+// clang-format on
