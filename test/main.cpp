@@ -115,7 +115,7 @@ TEST_CASE("Sum", "[Tensor]") {
     REQUIRE(ten3(1, 1) == 4);
     REQUIRE(ten3(1, 2) == 5);
 
-    auto ten4 = ten2 + Tensor<float>::iota({2, 3});
+    Tensor<float> ten4 = ten2 + Tensor<float>::iota({2, 3});
 
     REQUIRE(ten4(0, 0) == 0.0f);
     REQUIRE(ten4(0, 1) == 2.0f);
@@ -123,4 +123,73 @@ TEST_CASE("Sum", "[Tensor]") {
     REQUIRE(ten4(1, 0) == 6.0f);
     REQUIRE(ten4(1, 1) == 8.0f);
     REQUIRE(ten4(1, 2) == 10.0f);
+}
+
+TEST_CASE("Subtraction", "[Tensor]") {
+    Tensor<int> ten1({2, 3});
+    Tensor<int> ten2 = Tensor<int>::iota({2, 3});
+
+    Tensor<int> ten3 = ten1 - ten2;
+
+    REQUIRE(ten3(0, 0) == 0);
+    REQUIRE(ten3(0, 1) == -1);
+    REQUIRE(ten3(0, 2) == -2);
+    REQUIRE(ten3(1, 0) == -3);
+    REQUIRE(ten3(1, 1) == -4);
+    REQUIRE(ten3(1, 2) == -5);
+
+    Tensor<float> ten4 = ten2 - Tensor<float>::iota({2, 3});
+
+    REQUIRE(ten4(0, 0) == 0.0f);
+    REQUIRE(ten4(0, 1) == 0.0f);
+    REQUIRE(ten4(0, 2) == 0.0f);
+    REQUIRE(ten4(1, 0) == 0.0f);
+    REQUIRE(ten4(1, 1) == 0.0f);
+    REQUIRE(ten4(1, 2) == 0.0f);
+}
+
+TEST_CASE("Multiplication", "[Tensor]") {
+    Tensor<int> ten1({2, 3});
+    Tensor<int> ten2 = Tensor<int>::iota({2, 3});
+
+    Tensor<int> ten3 = ten1 * ten2;
+
+    REQUIRE(ten3(0, 0) == 0);
+    REQUIRE(ten3(0, 1) == 0);
+    REQUIRE(ten3(0, 2) == 0);
+    REQUIRE(ten3(1, 0) == 0);
+    REQUIRE(ten3(1, 1) == 0);
+    REQUIRE(ten3(1, 2) == 0);
+
+    Tensor<float> ten4 = ten2 * Tensor<float>::iota({2, 3});
+
+    REQUIRE(ten4(0, 0) == 0.0f);
+    REQUIRE(ten4(0, 1) == 1.0f);
+    REQUIRE(ten4(0, 2) == 4.0f);
+    REQUIRE(ten4(1, 0) == 9.0f);
+    REQUIRE(ten4(1, 1) == 16.0f);
+    REQUIRE(ten4(1, 2) == 25.0f);
+}
+
+TEST_CASE("Division", "[Tensor]") {
+    Tensor<int> ten1({2, 3}, 2); // Tensor of twos
+    Tensor<int> ten2 = Tensor<int>::iota({2, 3}, 1); // Tensor from 1 to 6
+
+    Tensor<int> ten3 = ten1 / ten2;
+
+    REQUIRE(ten3(0, 0) == 2);
+    REQUIRE(ten3(0, 1) == 1);
+    REQUIRE(ten3(0, 2) == 0);
+    REQUIRE(ten3(1, 0) == 0);
+    REQUIRE(ten3(1, 1) == 0);
+    REQUIRE(ten3(1, 2) == 0);
+
+    Tensor<float> ten4 = ten1 / Tensor<float>::iota({2, 3}, 1.0f); // Tensor from 1.0 to 6.0
+
+    REQUIRE(ten4(0, 0) == 2.0f);
+    REQUIRE(ten4(0, 1) == 1.0f);
+    REQUIRE(ten4(0, 2) == 2.0f/3.0f);
+    REQUIRE(ten4(1, 0) == 0.5f);
+    REQUIRE(ten4(1, 1) == 2.0f/5.0f);
+    REQUIRE(ten4(1, 2) == 1.0f/3.0f);
 }

@@ -3,8 +3,8 @@
 #include <algorithm>
 #include <cassert>
 #include <numeric>
-#include <type_traits>
 #include <vector>
+#include <operators.hpp>
 
 template <typename T>
 constexpr auto cumprod(const std::vector<T>& v) -> T {
@@ -32,8 +32,7 @@ class Tensor {
     }
 
     template <typename U = ValueType>
-    auto static iota(const IndexType& dimensions) -> Tensor {
-        U value{};
+    auto static iota(const IndexType& dimensions, U value = {}) -> Tensor {
         Tensor tensor(dimensions);
         std::generate(tensor.begin(), tensor.end(), [&value] { return value++; });
         return tensor;
@@ -119,21 +118,3 @@ class Tensor {
         }
     }
 };
-
-template <typename T, typename U, typename = std::void_t<>>
-struct has_addition : std::false_type {};
-
-template <typename T, typename U>
-struct has_addition<T, U, std::void_t<decltype(std::declval<T>() + std::declval<U>())>> : std::true_type {};
-
-// clang-format off
-template <typename T, typename U>
-auto operator+(const Tensor<T>& a, const Tensor<U>& b) 
-    -> typename std::enable_if<has_addition<T, U>::value, Tensor<typename std::common_type<T, U>::type>>::type
-{
-    using otype = typename std::common_type<T, U>::type;
-    Tensor<otype> result(a.shape());
-    std::transform(a.begin(), a.end(), b.begin(), result.begin(), std::plus<otype>());
-    return result;
-}
-// clang-format on
