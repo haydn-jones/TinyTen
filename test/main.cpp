@@ -97,7 +97,7 @@ TEST_CASE("Strides", "[Tensor]") {
     REQUIRE(ten1.stride(3) == 1);
 
     // Reshape the tensor
-    ten1.reshape({15, 2, 5});
+    ten1.reshape_({15, 2, 5});
     REQUIRE(ten1.stride(0) == 10);
     REQUIRE(ten1.stride(1) == 5);
     REQUIRE(ten1.stride(2) == 1);
@@ -207,4 +207,33 @@ TEST_CASE("ShapeIter", "[Tensor]") {
     for (size_t i = 0; i < indices.size(); i++) {
         REQUIRE(ten1.flatten_index(indices.at(i)) == i);
     }
+
+    for (size_t i = 0; i < indices.size(); i++) {
+        ten1(indices.at(i)) = i;
+    }
+
+    for (size_t i = 0; i < indices.size(); i++) {
+        REQUIRE(ten1(indices.at(i)) == i);
+    }
+}
+
+TEST_CASE("Permute", "[Tensor]") {
+    tt::Tensor<int> ten1 = tt::Tensor<int>::iota({2, 3});
+    tt::Tensor<int> ten2 = ten1.permute({1, 0});
+
+    REQUIRE(ten2(0, 0) == 0);
+    REQUIRE(ten2(0, 1) == 3);
+    REQUIRE(ten2(1, 0) == 1);
+    REQUIRE(ten2(1, 1) == 4);
+    REQUIRE(ten2(2, 0) == 2);
+    REQUIRE(ten2(2, 1) == 5);
+
+    tt::Tensor<int> ten3 = ten2.permute({1, 0});
+
+    REQUIRE(ten3(0, 0) == 0);
+    REQUIRE(ten3(0, 1) == 1);
+    REQUIRE(ten3(0, 2) == 2);
+    REQUIRE(ten3(1, 0) == 3);
+    REQUIRE(ten3(1, 1) == 4);
+    REQUIRE(ten3(1, 2) == 5);
 }

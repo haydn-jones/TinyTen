@@ -13,6 +13,16 @@ namespace tt::inline v1 {
         return std::accumulate(v.begin(), v.end(), 1, std::multiplies<T>());
     }
 
+    template <typename T, typename U>
+    constexpr auto permute_vec(const std::vector<T>& vals, const std::vector<U>& perm) -> std::vector<T> {
+        assert(vals.size() == perm.size());
+        std::vector<T> result(vals.size());
+        for (size_t i = 0; i < perm.size(); ++i) {
+            result[i] = vals[perm[i]];
+        }
+        return result;
+    }
+
     template <typename T>
     class Tensor {
       public:
@@ -23,10 +33,10 @@ namespace tt::inline v1 {
 
         Tensor() = default;
 
-        Tensor(const IndexType& dimensions) : dimensions_(dimensions) {
+        Tensor(const IndexType& dimensions) {
             size_t total_size = cumprod(dimensions);
+            this->_set_shape(dimensions);
             this->data_.resize(total_size);
-            calculate_strides();
         }
 
         Tensor(const IndexType& dimensions, const ValueType& value) : Tensor(dimensions) {
@@ -48,10 +58,27 @@ namespace tt::inline v1 {
             return dimensions_;
         }
 
-        constexpr void reshape(const IndexType& dimensions) {
+        constexpr void reshape_(const IndexType& dimensions) {
             assert(cumprod(dimensions) == size());
-            dimensions_ = dimensions;
-            calculate_strides();
+            this->_set_shape(dimensions);
+        }
+
+        constexpr auto reshape(const IndexType& dimensions) const -> Tensor {
+            Tensor tensor(*this);
+            tensor.reshape_(dimensions);
+            return tensor;
+        }
+
+        constexpr auto permute_(const IndexType& permutation) {
+            assert(permutation.size() == dimensions_.size());
+            dimensions_ = permute_vec(dimensions_, permutation);
+            strides_ = permute_vec(strides_, permutation);
+        }
+
+        constexpr auto permute(const IndexType& permutation) const -> Tensor {
+            Tensor tensor(*this);
+            tensor.permute_(permutation);
+            return tensor;
         }
 
         // Indexing with multiple indices
@@ -122,7 +149,10 @@ namespace tt::inline v1 {
         IndexType dimensions_;
         IndexType strides_;
 
-        constexpr void calculate_strides() {
+        constexpr void _set_shape(const IndexType& dimensions) {
+            dimensions_ = dimensions;
+
+            // Calculate strides
             strides_.resize(dimensions_.size());
             std::fill(strides_.begin(), strides_.end(), 1);
 
