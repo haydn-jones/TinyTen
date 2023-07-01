@@ -12,7 +12,8 @@
             "generator": "Ninja",
             "binaryDir": "${sourceDir}/build",
             "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "DEBUG"
+                "CMAKE_BUILD_TYPE": "DEBUG",
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
             }
         },
         {

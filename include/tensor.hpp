@@ -1,5 +1,6 @@
 #pragma once
 
+#include <ShapeIterator.hpp>
 #include <algorithm>
 #include <cassert>
 #include <numeric>
@@ -24,7 +25,7 @@ namespace tt::inline v1 {
 
         Tensor(const IndexType& dimensions) : dimensions_(dimensions) {
             size_t total_size = cumprod(dimensions);
-            data_.resize(total_size);
+            this->data_.resize(total_size);
             calculate_strides();
         }
 
@@ -41,7 +42,7 @@ namespace tt::inline v1 {
 
         auto size() const noexcept -> SizeType { return data_.size(); }
 
-        [[nodiscard]] auto shape() const noexcept -> IndexType { return dimensions_; }
+        auto shape() const noexcept -> const IndexType& { return dimensions_; }
 
         void reshape(const IndexType& dimensions) {
             assert(cumprod(dimensions) == size());
@@ -84,11 +85,8 @@ namespace tt::inline v1 {
         }
 
         constexpr auto flatten_index(const IndexType& indices) const -> SizeType {
-            SizeType idx = 0;
-            for (int i = indices.size() - 1; i >= 0; --i) {
-                idx += strides_[i] * indices[i];
-            }
-            return idx;
+            return std::transform_reduce(indices.begin(), indices.end(), strides_.begin(), static_cast<SizeType>(0),
+                                         std::plus<>(), std::multiplies<>());
         }
 
         template <typename... Args>

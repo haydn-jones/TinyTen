@@ -2,6 +2,7 @@
 
 #include <concepts>
 #include <functional>
+#include <stdexcept>
 #include <type_traits>
 
 namespace tt::inline v1 {
