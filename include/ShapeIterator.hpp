@@ -35,13 +35,13 @@ class ShapeIter {
 
         constexpr auto operator++() -> ShapeIterImpl& {
             this->iter_once = true;
-            for (int64_t i = static_cast<int64_t>(cur_vals.size()) - 1; i >= 0; --i) {
-                if (++cur_vals[i] >= shape[i]) {
-                    if (i == 0) {
+            for (size_t i = cur_vals.size(); i >= 1; --i) {
+                if (++cur_vals[i - 1] >= shape[i - 1]) {
+                    if (i == 1) {
                         cur_vals = shape;
                         break;
                     }
-                    cur_vals[i] = 0;
+                    cur_vals[i - 1] = 0;
                 } else {
                     break;
                 }

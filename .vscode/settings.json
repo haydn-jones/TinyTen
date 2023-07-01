@@ -67,6 +67,8 @@
         "typeindex": "cpp",
         "typeinfo": "cpp",
         "variant": "cpp",
-        "chrono": "cpp"
+        "chrono": "cpp",
+        "fstream": "cpp",
+        "regex": "cpp"
     }
 }

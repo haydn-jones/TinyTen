@@ -5,14 +5,10 @@
 #include <cassert>
 #include <numeric>
 #include <operators.hpp>
+#include <utils.hpp>
 #include <vector>
 
 namespace tt::inline v1 {
-    template <typename T>
-    constexpr auto cumprod(const std::vector<T>& v) -> T {
-        return std::reduce(v.begin(), v.end(), 1, std::multiplies<T>());
-    }
-
     template <typename T, typename U>
     constexpr auto permute_vec(const std::vector<T>& vals, const std::vector<U>& perm) -> std::vector<T> {
         assert(vals.size() == perm.size());
