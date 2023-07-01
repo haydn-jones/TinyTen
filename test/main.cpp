@@ -3,7 +3,7 @@
 #include <tensor.hpp>
 
 TEST_CASE("Tensor operations", "[Tensor]") {
-    using TensorType = Tensor<int>;
+    using TensorType = tt::Tensor<int>;
     using IndexType = TensorType::IndexType;
 
     SECTION("default constructed tensor should be empty") {
@@ -38,7 +38,7 @@ TEST_CASE("Tensor operations", "[Tensor]") {
 }
 
 TEST_CASE("iota", "[Tensor]") {
-    using TensorType1 = Tensor<int>;
+    using TensorType1 = tt::Tensor<int>;
 
     auto tensor1 = TensorType1::iota({2, 2});
     REQUIRE(tensor1.size() == 4);
@@ -47,7 +47,7 @@ TEST_CASE("iota", "[Tensor]") {
     REQUIRE(tensor1(1, 0) == 2);
     REQUIRE(tensor1(1, 1) == 3);
 
-    using TensorType2 = Tensor<double>;
+    using TensorType2 = tt::Tensor<double>;
 
     auto tensor2 = TensorType1::iota({2, 2});
     REQUIRE(tensor2.size() == 4);
@@ -58,7 +58,7 @@ TEST_CASE("iota", "[Tensor]") {
 }
 
 TEST_CASE("multi-dim indexing", "[Tensor]") {
-    Tensor<int> ten({1, 3, 5, 10});
+    tt::Tensor<int> ten({1, 3, 5, 10});
 
     REQUIRE(ten(0, 0, 0, 0) == 0);
 
@@ -67,7 +67,7 @@ TEST_CASE("multi-dim indexing", "[Tensor]") {
 }
 
 TEST_CASE("Index flattening", "[Tensor]") {
-    Tensor<int> ten1({1, 3, 5, 10});
+    tt::Tensor<int> ten1({1, 3, 5, 10});
 
     REQUIRE(ten1.flatten_index({0, 0, 0, 0}) == 0);
     REQUIRE(ten1.flatten_index({0, 0, 0, 1}) == 1);
@@ -87,7 +87,7 @@ TEST_CASE("Index flattening", "[Tensor]") {
 }
 
 TEST_CASE("Strides", "[Tensor]") {
-    Tensor<int> ten1({1, 3, 5, 10});
+    tt::Tensor<int> ten1({1, 3, 5, 10});
 
     // ensure that the strides are correct
     REQUIRE(ten1.stride(0) == 150);
@@ -103,10 +103,10 @@ TEST_CASE("Strides", "[Tensor]") {
 }
 
 TEST_CASE("Sum", "[Tensor]") {
-    Tensor<int> ten1({2, 3});
-    Tensor<int> ten2 = Tensor<int>::iota({2, 3});
+    tt::Tensor<int> ten1({2, 3});
+    tt::Tensor<int> ten2 = tt::Tensor<int>::iota({2, 3});
 
-    Tensor<int> ten3 = ten1 + ten2;
+    tt::Tensor<int> ten3 = ten1 + ten2;
 
     REQUIRE(ten3(0, 0) == 0);
     REQUIRE(ten3(0, 1) == 1);
@@ -115,7 +115,7 @@ TEST_CASE("Sum", "[Tensor]") {
     REQUIRE(ten3(1, 1) == 4);
     REQUIRE(ten3(1, 2) == 5);
 
-    Tensor<float> ten4 = ten2 + Tensor<float>::iota({2, 3});
+    tt::Tensor<float> ten4 = ten2 + tt::Tensor<float>::iota({2, 3});
 
     REQUIRE(ten4(0, 0) == 0.0f);
     REQUIRE(ten4(0, 1) == 2.0f);
@@ -126,10 +126,10 @@ TEST_CASE("Sum", "[Tensor]") {
 }
 
 TEST_CASE("Subtraction", "[Tensor]") {
-    Tensor<int> ten1({2, 3});
-    Tensor<int> ten2 = Tensor<int>::iota({2, 3});
+    tt::Tensor<int> ten1({2, 3});
+    tt::Tensor<int> ten2 = tt::Tensor<int>::iota({2, 3});
 
-    Tensor<int> ten3 = ten1 - ten2;
+    tt::Tensor<int> ten3 = ten1 - ten2;
 
     REQUIRE(ten3(0, 0) == 0);
     REQUIRE(ten3(0, 1) == -1);
@@ -138,7 +138,7 @@ TEST_CASE("Subtraction", "[Tensor]") {
     REQUIRE(ten3(1, 1) == -4);
     REQUIRE(ten3(1, 2) == -5);
 
-    Tensor<float> ten4 = ten2 - Tensor<float>::iota({2, 3});
+    tt::Tensor<float> ten4 = ten2 - tt::Tensor<float>::iota({2, 3});
 
     REQUIRE(ten4(0, 0) == 0.0f);
     REQUIRE(ten4(0, 1) == 0.0f);
@@ -149,10 +149,10 @@ TEST_CASE("Subtraction", "[Tensor]") {
 }
 
 TEST_CASE("Multiplication", "[Tensor]") {
-    Tensor<int> ten1({2, 3});
-    Tensor<int> ten2 = Tensor<int>::iota({2, 3});
+    tt::Tensor<int> ten1({2, 3});
+    tt::Tensor<int> ten2 = tt::Tensor<int>::iota({2, 3});
 
-    Tensor<int> ten3 = ten1 * ten2;
+    tt::Tensor<int> ten3 = ten1 * ten2;
 
     REQUIRE(ten3(0, 0) == 0);
     REQUIRE(ten3(0, 1) == 0);
@@ -161,7 +161,7 @@ TEST_CASE("Multiplication", "[Tensor]") {
     REQUIRE(ten3(1, 1) == 0);
     REQUIRE(ten3(1, 2) == 0);
 
-    Tensor<float> ten4 = ten2 * Tensor<float>::iota({2, 3});
+    tt::Tensor<float> ten4 = ten2 * tt::Tensor<float>::iota({2, 3});
 
     REQUIRE(ten4(0, 0) == 0.0f);
     REQUIRE(ten4(0, 1) == 1.0f);
@@ -172,10 +172,10 @@ TEST_CASE("Multiplication", "[Tensor]") {
 }
 
 TEST_CASE("Division", "[Tensor]") {
-    Tensor<int> ten1({2, 3}, 2); // Tensor of twos
-    Tensor<int> ten2 = Tensor<int>::iota({2, 3}, 1); // Tensor from 1 to 6
+    tt::Tensor<int> ten1({2, 3}, 2);                          // Tensor of twos
+    tt::Tensor<int> ten2 = tt::Tensor<int>::iota({2, 3}, 1);  // Tensor from 1 to 6
 
-    Tensor<int> ten3 = ten1 / ten2;
+    tt::Tensor<int> ten3 = ten1 / ten2;
 
     REQUIRE(ten3(0, 0) == 2);
     REQUIRE(ten3(0, 1) == 1);
@@ -184,12 +184,12 @@ TEST_CASE("Division", "[Tensor]") {
     REQUIRE(ten3(1, 1) == 0);
     REQUIRE(ten3(1, 2) == 0);
 
-    Tensor<float> ten4 = ten1 / Tensor<float>::iota({2, 3}, 1.0f); // Tensor from 1.0 to 6.0
+    tt::Tensor<float> ten4 = ten1 / tt::Tensor<float>::iota({2, 3}, 1.0f);  // Tensor from 1.0 to 6.0
 
     REQUIRE(ten4(0, 0) == 2.0f);
     REQUIRE(ten4(0, 1) == 1.0f);
-    REQUIRE(ten4(0, 2) == 2.0f/3.0f);
+    REQUIRE(ten4(0, 2) == 2.0f / 3.0f);
     REQUIRE(ten4(1, 0) == 0.5f);
-    REQUIRE(ten4(1, 1) == 2.0f/5.0f);
-    REQUIRE(ten4(1, 2) == 1.0f/3.0f);
+    REQUIRE(ten4(1, 1) == 2.0f / 5.0f);
+    REQUIRE(ten4(1, 2) == 1.0f / 3.0f);
 }
