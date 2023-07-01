@@ -10,7 +10,7 @@
 namespace tt::inline v1 {
     template <typename T>
     constexpr auto cumprod(const std::vector<T>& v) -> T {
-        return std::accumulate(v.begin(), v.end(), 1, std::multiplies<T>());
+        return std::reduce(v.begin(), v.end(), 1, std::multiplies<T>());
     }
 
     template <typename T, typename U>
