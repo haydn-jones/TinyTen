@@ -199,7 +199,7 @@ TEST_CASE("ShapeIter", "[Tensor]") {
     tt::Tensor<int> ten1({1, 3, 4});
 
     std::vector<std::vector<size_t>> indices;
-    for (auto& v: ShapeIter(ten1.shape())) {
+    for (auto& v : ShapeIter(ten1.shape())) {
         indices.push_back(v);
     }
 
