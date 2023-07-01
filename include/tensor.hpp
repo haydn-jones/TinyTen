@@ -3,6 +3,7 @@
 #include <ShapeIterator.hpp>
 #include <algorithm>
 #include <cassert>
+#include <cmath>
 #include <numeric>
 #include <operators.hpp>
 #include <utils.hpp>
@@ -130,10 +131,60 @@ namespace tt::inline v1 {
             return strides_[i];
         }
 
+        ////////////////////////////////////////////////////////////////////
+        // Trigonometric functions
+        ////////////////////////////////////////////////////////////////////
+        constexpr auto cos_() -> Tensor& requires requires(ValueType x) {
+            { std::cos(x) } -> std::same_as<ValueType>;
+        }
+        {
+            std::transform(this->begin(), this->end(), this->begin(), [](auto x) { return std::cos(x); });
+            return *this;
+        }
+
+        constexpr auto cos() const -> Tensor {
+            Tensor tensor(*this);
+            tensor.cos_();
+            return tensor;
+        }
+
+        constexpr auto sin_() -> Tensor& requires requires(ValueType x) {
+            { std::sin(x) } -> std::same_as<ValueType>;
+        }
+        {
+            std::transform(this->begin(), this->end(), this->begin(), [](auto x) { return std::sin(x); });
+            return *this;
+        }
+
+        constexpr auto sin() const -> Tensor {
+            Tensor tensor(*this);
+            tensor.sin_();
+            return tensor;
+        }
+
+        ////////////////////////////////////////////////////////////////////
+        // Misc functions
+        ////////////////////////////////////////////////////////////////////
+
+        template <typename U>
+        constexpr auto astype() -> Tensor<U> {
+            Tensor<U> res(this->dimensions_, this->strides_);
+            std::transform(
+                this->begin(), this->end(), res.begin(), [](T & x) constexpr { return static_cast<U>(x); });
+            return res;
+        }
+
       private:
         ContainerType data_;
         IndexType dimensions_;
         IndexType strides_;
+
+        template <typename U>
+        friend class Tensor;
+
+        Tensor(const IndexType& dimensions, const IndexType& strides) : Tensor(dimensions) {
+            this->strides_ = strides;
+        }
 
         constexpr void _set_shape(const IndexType& dimensions) {
             dimensions_ = dimensions;

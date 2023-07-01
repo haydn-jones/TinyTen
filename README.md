@@ -22,7 +22,11 @@ Small and simple, header-only, N-Dimensional Tensor implementation in C++.
 - [ ] Generic apply
 - [ ] Pow
 - [ ] Hyperbolic functions (sinh, cosh, tanh, etc.)
+- [ ] Inverse hyperbolic functions (asinh, acosh, atanh, etc.)
+- [ ] Inverse trigonometric functions (asin, acos, atan, etc.)
 - [ ] Trigonometric functions (sin, cos, tan, etc.)
+  - [X] Sin
+  - [X] Cos
 - [ ] Sqrt
 - [ ] Square
 - [ ] Exp
@@ -33,10 +37,6 @@ Small and simple, header-only, N-Dimensional Tensor implementation in C++.
 - [ ] Floor
 - [ ] Round
 - [ ] Modulo
-- [ ] Tan
-- [ ] ArcSin
-- [ ] ArcCos
-- [ ] ArcTan
 - [ ] Logarithms of different bases (e.g., log2, log10)
 - [ ] Truncation
 - [ ] Sign function
