@@ -13,3 +13,4 @@
   NamespaceIndentation: All
   BreakBeforeBinaryOperators: All
   BreakBeforeTernaryOperators: 'true'
+  AllowShortFunctionsOnASingleLine: Empty

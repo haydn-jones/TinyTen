@@ -1,17 +1,22 @@
 #pragma once
 
 #include <algorithm>
+#include <utility>
 #include <vector>
 
 class ShapeIter {
     class ShapeIterImpl;
 
   public:
-    ShapeIter(const std::vector<size_t>& shape) : shape(shape) {}
+    ShapeIter(std::vector<size_t> shape) : shape(std::move(shape)) {}
 
-    ShapeIterImpl begin() const { return ShapeIterImpl(this->shape, true); }
+    [[nodiscard]] auto begin() const -> ShapeIterImpl {
+        return {this->shape, true};
+    }
 
-    ShapeIterImpl end() const { return ShapeIterImpl(this->shape, false); }
+    [[nodiscard]] auto end() const -> ShapeIterImpl {
+        return {this->shape, false};
+    }
 
   private:
     const std::vector<size_t> shape;
@@ -22,13 +27,13 @@ class ShapeIter {
         using element_type = std::vector<size_t>;
         using iterator_category = std::forward_iterator_tag;
 
-        ShapeIterImpl(const value_type& shape, bool start) : shape(shape), cur_vals(shape), iter_once(false) {
+        ShapeIterImpl(const value_type& shape, bool start) : shape(shape), cur_vals(shape) {
             if (start) {
                 std::fill(this->cur_vals.begin(), this->cur_vals.end(), 0);
             }
         }
 
-        ShapeIterImpl& operator++() {
+        constexpr auto operator++() -> ShapeIterImpl& {
             this->iter_once = true;
             for (int64_t i = cur_vals.size() - 1; i >= 0; --i) {
                 if (++cur_vals[i] >= shape[i]) {
@@ -44,15 +49,17 @@ class ShapeIter {
             return *this;
         }
 
-        bool operator!=(const ShapeIterImpl& other) const {
+        constexpr auto operator!=(const ShapeIterImpl& other) const -> bool {
             return !iter_once || (this->cur_vals != other.cur_vals) || (this->shape != other.shape);
         }
 
-        const value_type operator*() const { return this->cur_vals; }
+        constexpr auto operator*() const -> const value_type {
+            return this->cur_vals;
+        }
 
       private:
         const value_type& shape;
         value_type cur_vals;
-        bool iter_once;
+        bool iter_once{false};
     };
 };

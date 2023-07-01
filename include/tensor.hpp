@@ -34,29 +34,33 @@ namespace tt::inline v1 {
         }
 
         template <typename U = ValueType>
-        auto static iota(const IndexType& dimensions, U value = {}) -> Tensor {
+        constexpr auto static iota(const IndexType& dimensions, U value = {}) -> Tensor {
             Tensor tensor(dimensions);
             std::generate(tensor.begin(), tensor.end(), [&value] { return value++; });
             return tensor;
         }
 
-        auto size() const noexcept -> SizeType { return data_.size(); }
+        constexpr auto size() const noexcept -> SizeType {
+            return data_.size();
+        }
 
-        auto shape() const noexcept -> const IndexType& { return dimensions_; }
+        [[nodiscard]] constexpr auto shape() const noexcept -> const IndexType& {
+            return dimensions_;
+        }
 
-        void reshape(const IndexType& dimensions) {
+        constexpr void reshape(const IndexType& dimensions) {
             assert(cumprod(dimensions) == size());
             dimensions_ = dimensions;
             calculate_strides();
         }
 
         // Indexing with multiple indices
-        auto operator()(SizeType idx) -> ValueType& {
+        constexpr auto operator()(SizeType idx) -> ValueType& {
             assert(idx < size());
             return data_[idx];
         }
 
-        auto operator()(SizeType idx) const -> const ValueType& {
+        constexpr auto operator()(SizeType idx) const -> const ValueType& {
             assert(idx < size());
             return data_[idx];
         }
@@ -96,19 +100,29 @@ namespace tt::inline v1 {
         }
 
         // Iterators
-        auto begin() noexcept { return data_.begin(); }
-        auto begin() const noexcept { return data_.cbegin(); }
-        auto end() noexcept { return data_.end(); }
-        auto end() const noexcept { return data_.cend(); }
+        constexpr auto begin() noexcept {
+            return data_.begin();
+        }
+        constexpr auto begin() const noexcept {
+            return data_.cbegin();
+        }
+        constexpr auto end() noexcept {
+            return data_.end();
+        }
+        constexpr auto end() const noexcept {
+            return data_.cend();
+        }
 
-        auto stride(int i) const -> SizeType { return strides_[i]; }
+        constexpr auto stride(int i) const -> SizeType {
+            return strides_[i];
+        }
 
       private:
         ContainerType data_;
         IndexType dimensions_;
         IndexType strides_;
 
-        void calculate_strides() {
+        constexpr void calculate_strides() {
             strides_.resize(dimensions_.size());
             std::fill(strides_.begin(), strides_.end(), 1);
 
