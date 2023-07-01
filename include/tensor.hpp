@@ -9,16 +9,6 @@
 #include <vector>
 
 namespace tt::inline v1 {
-    template <typename T, typename U>
-    constexpr auto permute_vec(const std::vector<T>& vals, const std::vector<U>& perm) -> std::vector<T> {
-        assert(vals.size() == perm.size());
-        std::vector<T> result(vals.size());
-        for (size_t i = 0; i < perm.size(); ++i) {
-            result[i] = vals[perm[i]];
-        }
-        return result;
-    }
-
     template <typename T>
     class Tensor {
       public:
