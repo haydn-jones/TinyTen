@@ -69,6 +69,7 @@
         "variant": "cpp",
         "chrono": "cpp",
         "fstream": "cpp",
-        "regex": "cpp"
+        "regex": "cpp",
+        "*.ipp": "cpp"
     }
 }

@@ -24,9 +24,7 @@ Small and simple, header-only, N-Dimensional Tensor implementation in C++.
 - [ ] Hyperbolic functions (sinh, cosh, tanh, etc.)
 - [ ] Inverse hyperbolic functions (asinh, acosh, atanh, etc.)
 - [ ] Inverse trigonometric functions (asin, acos, atan, etc.)
-- [ ] Trigonometric functions (sin, cos, tan, etc.)
-  - [X] Sin
-  - [X] Cos
+- [X] Trigonometric functions (sin, cos, tan, etc.)
 - [ ] Sqrt
 - [ ] Square
 - [ ] Exp

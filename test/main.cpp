@@ -251,3 +251,11 @@ TEST_CASE("Permute", "[Tensor]") {
     // permuting with more than 2 dimensions should throw an error
     REQUIRE_THROWS(ten1.permute({0, 1, 2}));
 }
+
+TEST_CASE("Benchmark Cos", "[Tensor]") {
+    tt::Tensor<float> ten1 = tt::Tensor<float>::iota({10000, 1000});
+
+    BENCHMARK("Cos") {
+        ten1.cos_();
+    };
+}

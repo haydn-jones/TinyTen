@@ -150,35 +150,72 @@ namespace tt::inline v1 {
             return strides_[i];
         }
 
+        constexpr auto apply_(ValueType (*f)(ValueType)) -> Tensor& {
+            std::for_each(std::execution::unseq, this->begin(), this->end(), f);
+            return *this;
+        }
+
         ////////////////////////////////////////////////////////////////////
         // Trigonometric functions
         ////////////////////////////////////////////////////////////////////
-        constexpr auto cos_() -> Tensor& requires requires(ValueType x) {
-            { std::cos(x) } -> std::same_as<ValueType>;
-        }
-        {
-            std::for_each(std::execution::unseq, this->begin(), this->end(), [](ValueType x) { x = std::cos(x); });
-            return *this;
-        }
-
-        constexpr auto cos() const -> Tensor {
-            Tensor tensor(*this);
-            tensor.cos_();
-            return tensor;
-        }
-
         constexpr auto sin_() -> Tensor& requires requires(ValueType x) {
             { std::sin(x) } -> std::same_as<ValueType>;
         }
-        {
-            std::for_each(std::execution::unseq, this->begin(), this->end(), [](ValueType x) { x = std::sin(x); });
-            return *this;
-        }
+        { return this->apply_(std::sin); }
 
         constexpr auto sin() const -> Tensor {
-            Tensor tensor(*this);
-            tensor.sin_();
-            return tensor;
+            return Tensor(*this).sin_();
+        }
+
+        constexpr auto cos_() -> Tensor& requires requires(ValueType x) {
+            { std::cos(x) } -> std::same_as<ValueType>;
+        }
+        { return this->apply_(std::cos); }
+
+        constexpr auto cos() const -> Tensor {
+            return Tensor(*this).cos_();
+        }
+
+        constexpr auto tan_() -> Tensor& requires requires(ValueType x) {
+            { std::tan(x) } -> std::same_as<ValueType>;
+        }
+        { return this->apply_(std::tan); }
+
+        constexpr auto tan() const -> Tensor {
+            return Tensor(*this).tan_();
+        }
+
+        constexpr auto cot_() -> Tensor& requires requires(ValueType x) {
+            { static_cast<ValueType>(1) / std::tan(x) } -> std::same_as<ValueType>;
+        }
+        {
+            return this->apply_([](ValueType x) constexpr { return static_cast<ValueType>(1) / std::tan(x); });
+        }
+
+        constexpr auto cot() const -> Tensor {
+            return Tensor(*this).cot_();
+        }
+
+        constexpr auto sec_() -> Tensor& requires requires(ValueType x) {
+            { static_cast<ValueType>(1) / std::cos(x) } -> std::same_as<ValueType>;
+        }
+        {
+            return this->apply_([](ValueType x) constexpr { return static_cast<ValueType>(1) / std::cos(x); });
+        }
+
+        constexpr auto sec() const -> Tensor {
+            return Tensor(*this).sec_();
+        }
+
+        constexpr auto csc_() -> Tensor& requires requires(ValueType x) {
+            { static_cast<ValueType>(1) / std::sin(x) } -> std::same_as<ValueType>;
+        }
+        {
+            return this->apply_([](ValueType x) constexpr { return static_cast<ValueType>(1) / std::sin(x); });
+        }
+
+        constexpr auto csc() const -> Tensor {
+            return Tensor(*this).csc_();
         }
 
         ////////////////////////////////////////////////////////////////////
