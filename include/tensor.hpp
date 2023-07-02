@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cmath>
+#include <concepts.hpp>
 #include <execution>
 #include <numeric>
 #include <operators.hpp>
@@ -150,45 +151,44 @@ namespace tt::inline v1 {
             return strides_[i];
         }
 
+        // Write a concept that ensures the function is supported
         constexpr auto apply_(ValueType (*f)(ValueType)) -> Tensor& {
             std::for_each(std::execution::unseq, this->begin(), this->end(), f);
             return *this;
         }
 
+        constexpr auto apply(ValueType (*f)(ValueType)) const -> Tensor {
+            return Tensor(*this).apply_(f);
+        }
+
         ////////////////////////////////////////////////////////////////////
         // Trigonometric functions
         ////////////////////////////////////////////////////////////////////
-        constexpr auto sin_() -> Tensor& requires requires(ValueType x) {
-            { std::sin(x) } -> std::same_as<ValueType>;
+        constexpr auto sin_() -> Tensor& requires SupportsSin<ValueType> {
+            return this->apply_(std::sin);
         }
-        { return this->apply_(std::sin); }
 
         constexpr auto sin() const -> Tensor {
             return Tensor(*this).sin_();
         }
 
-        constexpr auto cos_() -> Tensor& requires requires(ValueType x) {
-            { std::cos(x) } -> std::same_as<ValueType>;
+        constexpr auto cos_() -> Tensor& requires SupportsCos<ValueType> {
+            return this->apply_(std::cos);
         }
-        { return this->apply_(std::cos); }
 
         constexpr auto cos() const -> Tensor {
             return Tensor(*this).cos_();
         }
 
-        constexpr auto tan_() -> Tensor& requires requires(ValueType x) {
-            { std::tan(x) } -> std::same_as<ValueType>;
+        constexpr auto tan_() -> Tensor& requires SupportsTan<ValueType> {
+            return this->apply_(std::tan);
         }
-        { return this->apply_(std::tan); }
 
         constexpr auto tan() const -> Tensor {
             return Tensor(*this).tan_();
         }
 
-        constexpr auto cot_() -> Tensor& requires requires(ValueType x) {
-            { static_cast<ValueType>(1) / std::tan(x) } -> std::same_as<ValueType>;
-        }
-        {
+        constexpr auto cot_() -> Tensor& requires SupportsCot<ValueType> {
             return this->apply_([](ValueType x) constexpr { return static_cast<ValueType>(1) / std::tan(x); });
         }
 
@@ -196,10 +196,7 @@ namespace tt::inline v1 {
             return Tensor(*this).cot_();
         }
 
-        constexpr auto sec_() -> Tensor& requires requires(ValueType x) {
-            { static_cast<ValueType>(1) / std::cos(x) } -> std::same_as<ValueType>;
-        }
-        {
+        constexpr auto sec_() -> Tensor& requires SupportsSec<ValueType> {
             return this->apply_([](ValueType x) constexpr { return static_cast<ValueType>(1) / std::cos(x); });
         }
 
@@ -207,10 +204,7 @@ namespace tt::inline v1 {
             return Tensor(*this).sec_();
         }
 
-        constexpr auto csc_() -> Tensor& requires requires(ValueType x) {
-            { static_cast<ValueType>(1) / std::sin(x) } -> std::same_as<ValueType>;
-        }
-        {
+        constexpr auto csc_() -> Tensor& requires SupportsCsc<ValueType> {
             return this->apply_([](ValueType x) constexpr { return static_cast<ValueType>(1) / std::sin(x); });
         }
 
