@@ -25,6 +25,13 @@ set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD 20)
 # being a cross-platform target, we enforce standards conformance on MSVC
 target_compile_options(${PROJECT_NAME} INTERFACE "$<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/permissive->")
 
+# optionally enable march=native
+option(TINYTEN_ENABLE_NATIVE "Enable -march=native for supported compilers" ON)
+if(TINYTEN_ENABLE_NATIVE)
+  message(STATUS "Enabling -march=native for supported compilers")
+  target_compile_options(${PROJECT_NAME} INTERFACE "$<$<COMPILE_LANG_AND_ID:CXX,ARMClang,AppleClang,Clang,GNU>:-march=native>")
+endif()
+
 target_include_directories(
   ${PROJECT_NAME}
   INTERFACE 

@@ -4,8 +4,10 @@
 #include <algorithm>
 #include <cassert>
 #include <cmath>
+#include <execution>
 #include <numeric>
 #include <operators.hpp>
+#include <random>
 #include <utils.hpp>
 #include <vector>
 
@@ -18,12 +20,15 @@ namespace tt::inline v1 {
         using SizeType = typename ContainerType::size_type;
         using IndexType = std::vector<size_t>;
 
+        ////////////////////////////////////////////////////////////////////
+        // Constructors
+        ////////////////////////////////////////////////////////////////////
         Tensor() = default;
 
         Tensor(const IndexType& dimensions) {
             size_t total_size = cumprod(dimensions);
-            this->_set_shape(dimensions);
             this->data_.resize(total_size);
+            this->_set_shape(dimensions);
         }
 
         Tensor(const IndexType& dimensions, const ValueType& value) : Tensor(dimensions) {
@@ -37,7 +42,17 @@ namespace tt::inline v1 {
             return tensor;
         }
 
-        constexpr auto size() const noexcept -> SizeType {
+        auto static randn(const IndexType& dimensions) -> Tensor {
+            std::random_device rd;
+            std::mt19937 gen(rd());
+            std::normal_distribution<> d(static_cast<ValueType>(0), static_cast<ValueType>(1));
+            Tensor tensor(dimensions);
+
+            std::generate(tensor.begin(), tensor.end(), [&d, &gen] { return d(gen); });
+            return tensor;
+        }
+
+        constexpr auto numel() const noexcept -> SizeType {
             return data_.size();
         }
 
@@ -46,7 +61,6 @@ namespace tt::inline v1 {
         }
 
         constexpr void reshape_(const IndexType& dimensions) {
-            assert(cumprod(dimensions) == size());
             this->_set_shape(dimensions);
         }
 
@@ -57,7 +71,6 @@ namespace tt::inline v1 {
         }
 
         constexpr auto permute_(const IndexType& permutation) {
-            assert(permutation.size() == dimensions_.size());
             dimensions_ = permute_vec(dimensions_, permutation);
             strides_ = permute_vec(strides_, permutation);
         }
@@ -68,15 +81,18 @@ namespace tt::inline v1 {
             return tensor;
         }
 
-        // Indexing with multiple indices
-        constexpr auto operator()(SizeType idx) -> ValueType& {
-            assert(idx < size());
-            return data_[idx];
+        constexpr auto flat(SizeType i) -> ValueType& {
+            if (i >= this->numel()) {
+                throw std::runtime_error("flat: index out of bounds");
+            }
+            return data_[i];
         }
 
-        constexpr auto operator()(SizeType idx) const -> const ValueType& {
-            assert(idx < size());
-            return data_[idx];
+        constexpr auto flat(SizeType i) const -> const ValueType& {
+            if (i >= this->numel()) {
+                throw std::runtime_error("flat: index out of bounds");
+            }
+            return data_[i];
         }
 
         // Indexing with vector
@@ -103,6 +119,9 @@ namespace tt::inline v1 {
         }
 
         constexpr auto flatten_index(const IndexType& indices) const -> SizeType {
+            if (indices.size() != dimensions_.size()) {
+                throw std::runtime_error("flatten_index: size mismatch");
+            }
             return std::transform_reduce(indices.begin(), indices.end(), strides_.begin(), static_cast<SizeType>(0),
                                          std::plus<>(), std::multiplies<>());
         }
@@ -138,7 +157,7 @@ namespace tt::inline v1 {
             { std::cos(x) } -> std::same_as<ValueType>;
         }
         {
-            std::transform(this->begin(), this->end(), this->begin(), [](auto x) { return std::cos(x); });
+            std::for_each(std::execution::unseq, this->begin(), this->end(), [](ValueType x) { x = std::cos(x); });
             return *this;
         }
 
@@ -152,7 +171,7 @@ namespace tt::inline v1 {
             { std::sin(x) } -> std::same_as<ValueType>;
         }
         {
-            std::transform(this->begin(), this->end(), this->begin(), [](auto x) { return std::sin(x); });
+            std::for_each(std::execution::unseq, this->begin(), this->end(), [](ValueType x) { x = std::sin(x); });
             return *this;
         }
 
@@ -187,6 +206,10 @@ namespace tt::inline v1 {
         }
 
         constexpr void _set_shape(const IndexType& dimensions) {
+            if (cumprod(dimensions) != this->numel()) {
+                throw std::runtime_error("Invalid dimensions");
+            }
+
             dimensions_ = dimensions;
 
             // Calculate strides

@@ -1,5 +1,7 @@
+#include <catch2/benchmark/catch_benchmark.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <cstdint>
+#include <iostream>
 #include <tensor.hpp>
 #include <vector>
 
@@ -9,12 +11,12 @@ TEST_CASE("Tensor operations", "[Tensor]") {
 
     SECTION("default constructed tensor should be empty") {
         TensorType tensor;
-        REQUIRE(tensor.size() == 0);
+        REQUIRE(tensor.numel() == 0);
     }
 
     SECTION("constructed with dimensions should have correct size") {
         TensorType tensor({4, 4, 4});
-        REQUIRE(tensor.size() == 4 * 4 * 4);
+        REQUIRE(tensor.numel() == 4 * 4 * 4);
     }
 
     SECTION("indexing should work correctly") {
@@ -42,7 +44,7 @@ TEST_CASE("iota", "[Tensor]") {
     using TensorType1 = tt::Tensor<int>;
 
     auto tensor1 = TensorType1::iota({2, 2});
-    REQUIRE(tensor1.size() == 4);
+    REQUIRE(tensor1.numel() == 4);
     REQUIRE(tensor1(0, 0) == 0);
     REQUIRE(tensor1(0, 1) == 1);
     REQUIRE(tensor1(1, 0) == 2);
@@ -51,7 +53,7 @@ TEST_CASE("iota", "[Tensor]") {
     using TensorType2 = tt::Tensor<double>;
 
     auto tensor2 = TensorType1::iota({2, 2});
-    REQUIRE(tensor2.size() == 4);
+    REQUIRE(tensor2.numel() == 4);
     REQUIRE(tensor2(0, 0) == 0.0);
     REQUIRE(tensor2(0, 1) == 1.0);
     REQUIRE(tensor2(1, 0) == 2.0);
@@ -88,7 +90,7 @@ TEST_CASE("Index flattening", "[Tensor]") {
 }
 
 TEST_CASE("Strides", "[Tensor]") {
-    tt::Tensor<int> ten1({1, 3, 5, 10});
+    tt::Tensor<int> ten1 = tt::Tensor<int>::iota({1, 3, 5, 10});
 
     // ensure that the strides are correct
     REQUIRE(ten1.stride(0) == 150);
@@ -101,6 +103,15 @@ TEST_CASE("Strides", "[Tensor]") {
     REQUIRE(ten1.stride(0) == 10);
     REQUIRE(ten1.stride(1) == 5);
     REQUIRE(ten1.stride(2) == 1);
+
+    REQUIRE_THROWS_AS(ten1.reshape({1, 2, 3, 4}), std::runtime_error);
+    REQUIRE_THROWS_AS(ten1.reshape_({1, 2, 3, 4}), std::runtime_error);
+
+    // out of place reshape should copy the data
+    auto ten2 = ten1.reshape({1, 10, 5, 3});
+    for (size_t i = 0; i < ten2.numel(); ++i) {
+        REQUIRE(ten2.flat(i) == i);
+    }
 }
 
 TEST_CASE("Sum", "[Tensor]") {
@@ -236,4 +247,7 @@ TEST_CASE("Permute", "[Tensor]") {
     REQUIRE(ten3(1, 0) == 3);
     REQUIRE(ten3(1, 1) == 4);
     REQUIRE(ten3(1, 2) == 5);
+
+    // permuting with more than 2 dimensions should throw an error
+    REQUIRE_THROWS(ten1.permute({0, 1, 2}));
 }
