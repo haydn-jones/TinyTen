@@ -295,3 +295,92 @@ TEST_CASE("TrigFunctions", "[Tensor]") {
         REQUIRE_THAT(sec(0, 0), Catch::Matchers::WithinAbs(1.8508152961730957f, 1e-6f));
     }
 }
+
+TEST_CASE("MultiDim-Indexing", "[Tensor]") {
+    using TensorType = tt::Tensor<int>;
+    using IndexType = TensorType::IndexType;
+
+    TensorType ten = TensorType::iota({2, 3});
+
+    SECTION("Unstrided multidim indexing") {
+        size_t v = 0;
+        for (size_t i = 0; i < ten.shape(0); i++) {
+            for (size_t j = 0; j < ten.shape(1); j++) {
+                REQUIRE(ten(i, j) == v);
+                v++;
+            }
+        }
+    }
+
+    SECTION("Unstrided unflattening") {
+        size_t v = 0;
+        for (size_t i = 0; i < ten.shape(0); i++) {
+            for (size_t j = 0; j < ten.shape(1); j++) {
+                REQUIRE(ten.unflatten_index(v) == IndexType{i, j});
+                v++;
+            }
+        }
+    }
+
+    SECTION("Unstrided flattening") {
+        size_t v = 0;
+        for (size_t i = 0; i < ten.shape(0); i++) {
+            for (size_t j = 0; j < ten.shape(1); j++) {
+                REQUIRE(ten.flatten_index(IndexType{i, j}) == v);
+                v++;
+            }
+        }
+    }
+
+    SECTION("Unstrided Unflat-Flat") {
+        for (size_t i = 0; i < ten.numel(); i++) {
+            REQUIRE(ten.flatten_index(ten.unflatten_index(i)) == i);
+        }
+    }
+
+    auto ten2 = ten.permute({1, 0});
+
+    SECTION("Strided multidim indexing") {
+        for (size_t i = 0; i < ten2.shape(0); i++) {
+            for (size_t j = 0; j < ten2.shape(1); j++) {
+                REQUIRE(ten2(i, j) == ten(j, i));
+            }
+        }
+    }
+
+    SECTION("Strided unflattening") {
+        size_t v = 0;
+        for (size_t i = 0; i < ten2.shape(0); i++) {
+            for (size_t j = 0; j < ten2.shape(1); j++) {
+                REQUIRE(ten2.unflatten_index(v) == IndexType{i, j});
+                v++;
+            }
+        }
+    }
+
+    SECTION("Strided flattening") {
+        size_t v = 0;
+        for (size_t i = 0; i < ten2.shape(0); i++) {
+            for (size_t j = 0; j < ten2.shape(1); j++) {
+                REQUIRE(ten2.flatten_index(IndexType{i, j}) == v);
+                v++;
+            }
+        }
+    }
+
+    SECTION("Strided Unflat-Flat") {
+        for (size_t i = 0; i < ten2.numel(); i++) {
+            REQUIRE(ten2.flatten_index(ten2.unflatten_index(i)) == i);
+        }
+    }
+}
+
+TEST_CASE("Benchmark ShapeIter", "[Tensor]") {
+    auto ten = tt::Tensor<int>({100, 100, 100});
+
+    BENCHMARK("ShapeIter") {
+        for (auto& v : ten.shape_iter()) {
+            ten(v) = 1;
+        }
+    };
+}

@@ -58,7 +58,14 @@ namespace tt::inline v1 {
         }
 
         [[nodiscard]] constexpr auto shape() const noexcept -> const IndexType& {
-            return dimensions_;
+            return shape_;
+        }
+
+        constexpr auto shape(size_t i) const -> SizeType {
+            if (i >= shape_.size()) {
+                throw std::runtime_error("shape: index out of bounds");
+            }
+            return shape_[i];
         }
 
         [[nodiscard]] constexpr auto strides() const noexcept -> const IndexType& {
@@ -76,7 +83,7 @@ namespace tt::inline v1 {
         }
 
         constexpr auto permute_(const IndexType& permutation) {
-            dimensions_ = permute_vec(dimensions_, permutation);
+            shape_ = permute_vec(shape_, permutation);
             strides_ = permute_vec(strides_, permutation);
         }
 
@@ -102,50 +109,54 @@ namespace tt::inline v1 {
 
         // Indexing with vector
         constexpr auto operator()(const IndexType& indices) -> ValueType& {
-            assert(indices.size() == dimensions_.size());
-            return data_[flatten_index(indices)];
+            assert(indices.size() == shape_.size());
+            return data_[this->_flatten_index(indices)];
         }
 
         constexpr auto operator()(const IndexType& indices) const -> const ValueType& {
-            assert(indices.size() == dimensions_.size());
-            return data_[flatten_index(indices)];
+            assert(indices.size() == shape_.size());
+            return data_[this->_flatten_index(indices)];
         }
 
         template <typename... Args>
         constexpr auto operator()(Args... args) -> ValueType& {
-            assert(sizeof...(args) == dimensions_.size());
-            return data_[flatten_index({static_cast<SizeType>(args)...})];
+            assert(sizeof...(args) == shape_.size());
+            return data_[this->_flatten_index({static_cast<SizeType>(args)...})];
         }
 
         template <typename... Args>
         constexpr auto operator()(Args... args) const -> const ValueType& {
-            assert(sizeof...(args) == dimensions_.size());
-            return data_[flatten_index({static_cast<SizeType>(args)...})];
+            assert(sizeof...(args) == shape_.size());
+            return data_[this->_flatten_index({static_cast<SizeType>(args)...})];
         }
 
         constexpr auto flatten_index(const IndexType& indices) const -> SizeType {
-            if (indices.size() != dimensions_.size()) {
-                throw std::runtime_error("flatten_index: size mismatch");
+            SizeType index = 0;
+            SizeType stride = 1;
+            for (int64_t i = this->shape_.size() - 1; i >= 0; --i) {
+                index += indices[i] * stride;
+                stride *= this->shape_[i];
             }
-            return std::transform_reduce(indices.begin(), indices.end(), strides_.begin(), static_cast<SizeType>(0),
-                                         std::plus<>(), std::multiplies<>());
+            return index;
         }
 
-        constexpr auto unflatten_index(SizeType flat_index) const -> IndexType {
-            IndexType idx(dimensions_.size());
-            std::transform(
-                strides_.begin(), strides_.end(), idx.begin(), [&flat_index](size_t stride) constexpr {
-                    size_t idx = flat_index / stride;
-                    flat_index %= stride;
-                    return idx;
-                });
-            return idx;
+        constexpr auto unflatten_index(SizeType index) const -> IndexType {
+            IndexType result;
+            result.reserve(this->shape_.size());
+
+            for (int i = this->shape_.size() - 1; i >= 0; --i) {
+                result.emplace_back(index % this->shape_[i]);
+                index /= this->shape_[i];
+            }
+
+            std::reverse(result.begin(), result.end());
+            return result;
         }
 
         template <typename... Args>
         constexpr auto flatten_index(Args... args) const -> SizeType {
-            assert(sizeof...(args) == dimensions_.size());
-            return flatten_index({static_cast<SizeType>(args)...});
+            IndexType indices{static_cast<SizeType>(args)...};
+            return this->flatten_index(indices);
         }
 
         // Iterators
@@ -232,19 +243,19 @@ namespace tt::inline v1 {
 
         template <typename U>
         constexpr auto astype() -> Tensor<U> {
-            Tensor<U> res(this->dimensions_, this->strides_);
+            Tensor<U> res(this->shape_, this->strides_);
             std::transform(
                 this->begin(), this->end(), res.begin(), [](T & x) constexpr { return static_cast<U>(x); });
             return res;
         }
 
         auto shape_iter() -> ShapeIter {
-            return ShapeIter(this->numel(), this->strides_);
+            return ShapeIter(this->numel(), this->shape_);
         }
 
       private:
         ContainerType data_;
-        IndexType dimensions_;
+        IndexType shape_;
         IndexType strides_;
 
         template <typename U>
@@ -259,15 +270,36 @@ namespace tt::inline v1 {
                 throw std::runtime_error("Invalid dimensions");
             }
 
-            dimensions_ = dimensions;
+            shape_ = dimensions;
 
             // Calculate strides
-            strides_.resize(dimensions_.size());
+            strides_.resize(shape_.size());
             std::fill(strides_.begin(), strides_.end(), 1);
 
-            for (int i = dimensions_.size() - 2; i >= 0; --i) {
-                strides_[i] = strides_[i + 1] * dimensions_[i + 1];
+            for (int i = shape_.size() - 2; i >= 0; --i) {
+                strides_[i] = strides_[i + 1] * shape_[i + 1];
             }
+        }
+
+        // Internal indexing, handles strided tensors
+        constexpr auto _unflatten_index(SizeType flat_index) const -> IndexType {
+            IndexType idx(shape_.size());
+            std::transform(
+                strides_.begin(), strides_.end(), idx.begin(), [&flat_index](size_t stride) constexpr {
+                    size_t idx = flat_index / stride;
+                    flat_index %= stride;
+                    return idx;
+                });
+            return idx;
+        }
+
+        // Internal indexing, handles strided tensors
+        constexpr auto _flatten_index(const IndexType& indices) const -> SizeType {
+            if (indices.size() != shape_.size()) {
+                throw std::runtime_error("flatten_index: size mismatch");
+            }
+            return std::transform_reduce(indices.begin(), indices.end(), strides_.begin(), static_cast<SizeType>(0),
+                                         std::plus<>(), std::multiplies<>());
         }
     };
 };  // namespace tt::inline v1
