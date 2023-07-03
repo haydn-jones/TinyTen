@@ -1,5 +1,6 @@
 #include <catch2/benchmark/catch_benchmark.hpp>
 #include <catch2/catch_test_macros.hpp>
+#include <catch2/matchers/catch_matchers_floating_point.hpp>
 #include <cstdint>
 #include <iostream>
 #include <tensor.hpp>
@@ -252,10 +253,41 @@ TEST_CASE("Permute", "[Tensor]") {
     REQUIRE_THROWS(ten1.permute({0, 1, 2}));
 }
 
-TEST_CASE("Benchmark Cos", "[Tensor]") {
-    tt::Tensor<float> ten1 = tt::Tensor<float>::iota({10000, 1000});
+TEST_CASE("TrigFunctions", "[Tensor]") {
+    tt::Tensor<float> ten = tt::Tensor<float>::iota({2, 5}, 1.0f);
 
-    BENCHMARK("Cos") {
-        ten1.cos_();
-    };
+    SECTION("Cos") {
+        auto cos = ten.cos();
+        float sum = std::accumulate(cos.begin(), cos.end(), 0.0f);
+        REQUIRE_THAT(sum, Catch::Matchers::WithinAbs(-1.4174476861953735, 1e-6f));
+        REQUIRE_THAT(cos(0, 0), Catch::Matchers::WithinAbs(0.5403023362159729, 1e-6f));
+    }
+
+    SECTION("Sin") {
+        auto sin = ten.sin();
+        float sum = std::accumulate(sin.begin(), sin.end(), 0.0f);
+        REQUIRE_THAT(sum, Catch::Matchers::WithinAbs(1.4111881256103516, 1e-6f));
+        REQUIRE_THAT(sin(0, 0), Catch::Matchers::WithinAbs(0.8414709568023682f, 1e-6f));
+    }
+
+    SECTION("Tan") {
+        auto tan = ten.tan();
+        float sum = std::accumulate(tan.begin(), tan.end(), 0.0f);
+        REQUIRE_THAT(sum, Catch::Matchers::WithinAbs(-9.016096115112305, 1e-6f));
+        REQUIRE_THAT(tan(0, 0), Catch::Matchers::WithinAbs(1.5574077367782593f, 1e-6f));
+    }
+
+    SECTION("Csc") {
+        auto csc = ten.csc();
+        float sum = std::accumulate(csc.begin(), csc.end(), 0.0f);
+        REQUIRE_THAT(sum, Catch::Matchers::WithinAbs(6.5524091720581055f, 1e-6f));
+        REQUIRE_THAT(csc(0, 0), Catch::Matchers::WithinAbs(1.1883951425552368f, 1e-6f));
+    }
+
+    SECTION("Sec") {
+        auto sec = ten.sec();
+        float sum = std::accumulate(sec.begin(), sec.end(), 0.0f);
+        REQUIRE_THAT(sum, Catch::Matchers::WithinAbs(-6.361124515533447f, 1e-6f));
+        REQUIRE_THAT(sec(0, 0), Catch::Matchers::WithinAbs(1.8508152961730957f, 1e-6f));
+    }
 }

@@ -151,21 +151,20 @@ namespace tt::inline v1 {
             return strides_[i];
         }
 
-        // Write a concept that ensures the function is supported
-        constexpr auto apply_(ValueType (*f)(ValueType)) -> Tensor& {
-            std::for_each(std::execution::unseq, this->begin(), this->end(), f);
+        constexpr auto map_(ValueType (*f)(ValueType)) -> Tensor& {
+            std::transform(std::execution::unseq, this->data_.begin(), this->data_.end(), this->data_.begin(), f);
             return *this;
         }
 
-        constexpr auto apply(ValueType (*f)(ValueType)) const -> Tensor {
-            return Tensor(*this).apply_(f);
+        constexpr auto map(ValueType (*f)(ValueType)) const -> Tensor {
+            return Tensor(*this).map_(f);
         }
 
         ////////////////////////////////////////////////////////////////////
         // Trigonometric functions
         ////////////////////////////////////////////////////////////////////
         constexpr auto sin_() -> Tensor& requires SupportsSin<ValueType> {
-            return this->apply_(std::sin);
+            return this->map_(std::sin);
         }
 
         constexpr auto sin() const -> Tensor {
@@ -173,7 +172,7 @@ namespace tt::inline v1 {
         }
 
         constexpr auto cos_() -> Tensor& requires SupportsCos<ValueType> {
-            return this->apply_(std::cos);
+            return this->map_(std::cos);
         }
 
         constexpr auto cos() const -> Tensor {
@@ -181,7 +180,7 @@ namespace tt::inline v1 {
         }
 
         constexpr auto tan_() -> Tensor& requires SupportsTan<ValueType> {
-            return this->apply_(std::tan);
+            return this->map_(std::tan);
         }
 
         constexpr auto tan() const -> Tensor {
@@ -189,7 +188,7 @@ namespace tt::inline v1 {
         }
 
         constexpr auto cot_() -> Tensor& requires SupportsCot<ValueType> {
-            return this->apply_([](ValueType x) constexpr { return static_cast<ValueType>(1) / std::tan(x); });
+            return this->map_([](ValueType x) constexpr { return static_cast<ValueType>(1) / std::tan(x); });
         }
 
         constexpr auto cot() const -> Tensor {
@@ -197,7 +196,7 @@ namespace tt::inline v1 {
         }
 
         constexpr auto sec_() -> Tensor& requires SupportsSec<ValueType> {
-            return this->apply_([](ValueType x) constexpr { return static_cast<ValueType>(1) / std::cos(x); });
+            return this->map_([](ValueType x) constexpr { return static_cast<ValueType>(1) / std::cos(x); });
         }
 
         constexpr auto sec() const -> Tensor {
@@ -205,7 +204,7 @@ namespace tt::inline v1 {
         }
 
         constexpr auto csc_() -> Tensor& requires SupportsCsc<ValueType> {
-            return this->apply_([](ValueType x) constexpr { return static_cast<ValueType>(1) / std::sin(x); });
+            return this->map_([](ValueType x) constexpr { return static_cast<ValueType>(1) / std::sin(x); });
         }
 
         constexpr auto csc() const -> Tensor {
