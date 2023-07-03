@@ -208,24 +208,28 @@ TEST_CASE("Division", "[Tensor]") {
 }
 
 TEST_CASE("ShapeIter", "[Tensor]") {
-    tt::Tensor<int> ten1({1, 3, 4});
+    tt::Tensor<int> ten({1, 3, 4});
 
     std::vector<std::vector<size_t>> indices;
-    for (auto& v : ShapeIter(ten1.shape())) {
+    for (auto& v : ten.shape_iter()) {
         indices.push_back(v);
     }
 
     REQUIRE(indices.size() == 12);
     for (size_t i = 0; i < indices.size(); i++) {
-        REQUIRE(ten1.flatten_index(indices.at(i)) == i);
+        REQUIRE(ten.flatten_index(indices.at(i)) == i);
     }
 
     for (size_t i = 0; i < indices.size(); i++) {
-        ten1(indices.at(i)) = i;
+        ten(indices.at(i)) = i;
     }
 
     for (size_t i = 0; i < indices.size(); i++) {
-        REQUIRE(ten1(indices.at(i)) == i);
+        REQUIRE(ten(indices.at(i)) == i);
+    }
+
+    for (auto& v : ten.shape_iter()) {
+        REQUIRE(ten.unflatten_index(ten.flatten_index(v)) == v);
     }
 }
 

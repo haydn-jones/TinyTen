@@ -61,6 +61,10 @@ namespace tt::inline v1 {
             return dimensions_;
         }
 
+        [[nodiscard]] constexpr auto strides() const noexcept -> const IndexType& {
+            return strides_;
+        }
+
         constexpr void reshape_(const IndexType& dimensions) {
             this->_set_shape(dimensions);
         }
@@ -116,7 +120,7 @@ namespace tt::inline v1 {
         template <typename... Args>
         constexpr auto operator()(Args... args) const -> const ValueType& {
             assert(sizeof...(args) == dimensions_.size());
-            return data_[flatten_index({args...})];
+            return data_[flatten_index({static_cast<SizeType>(args)...})];
         }
 
         constexpr auto flatten_index(const IndexType& indices) const -> SizeType {
@@ -125,6 +129,17 @@ namespace tt::inline v1 {
             }
             return std::transform_reduce(indices.begin(), indices.end(), strides_.begin(), static_cast<SizeType>(0),
                                          std::plus<>(), std::multiplies<>());
+        }
+
+        constexpr auto unflatten_index(SizeType flat_index) const -> IndexType {
+            IndexType idx(dimensions_.size());
+            std::transform(
+                strides_.begin(), strides_.end(), idx.begin(), [&flat_index](size_t stride) constexpr {
+                    size_t idx = flat_index / stride;
+                    flat_index %= stride;
+                    return idx;
+                });
+            return idx;
         }
 
         template <typename... Args>
@@ -223,6 +238,10 @@ namespace tt::inline v1 {
             return res;
         }
 
+        auto shape_iter() -> ShapeIter {
+            return ShapeIter(this->numel(), this->strides_);
+        }
+
       private:
         ContainerType data_;
         IndexType dimensions_;
@@ -251,5 +270,4 @@ namespace tt::inline v1 {
             }
         }
     };
-
 };  // namespace tt::inline v1

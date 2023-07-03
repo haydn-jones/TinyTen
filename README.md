@@ -22,7 +22,6 @@ Small and simple, header-only, N-Dimensional Tensor implementation in C++.
 - [ ] Generic apply
 - [ ] Pow
 - [ ] Hyperbolic functions (sinh, cosh, tanh, etc.)
-- [ ] Inverse hyperbolic functions (asinh, acosh, atanh, etc.)
 - [ ] Inverse trigonometric functions (asin, acos, atan, etc.)
 - [X] Trigonometric functions (sin, cos, tan, etc.)
 - [ ] Sqrt
@@ -68,7 +67,7 @@ Small and simple, header-only, N-Dimensional Tensor implementation in C++.
 ### Misc
 
 - [X] Reshape
-- [ ] Transpose / Permute
+- [X] Transpose / Permute
 - [ ] Concatenate
 - [ ] Stack/VStack/HStack
 - [ ] Split

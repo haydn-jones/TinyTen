@@ -8,18 +8,19 @@ class ShapeIter {
     class ShapeIterImpl;
 
   public:
-    ShapeIter(std::vector<size_t> shape) : shape(std::move(shape)) {}
+    ShapeIter(size_t numel, std::vector<size_t> strides) : numel(numel), strides(std::move(strides)) {}
 
     [[nodiscard]] auto begin() const -> ShapeIterImpl {
-        return {this->shape, true};
+        return {this->numel, this->strides, true};
     }
 
     [[nodiscard]] auto end() const -> ShapeIterImpl {
-        return {this->shape, false};
+        return {this->numel, this->strides, false};
     }
 
   private:
-    const std::vector<size_t> shape;
+    const size_t numel;
+    const std::vector<size_t> strides;
 
     class ShapeIterImpl {
       public:
@@ -27,39 +28,40 @@ class ShapeIter {
         using element_type = std::vector<size_t>;
         using iterator_category = std::forward_iterator_tag;
 
-        ShapeIterImpl(const value_type& shape, bool start) : shape(shape), cur_vals(shape) {
-            if (start) {
-                std::fill(this->cur_vals.begin(), this->cur_vals.end(), 0);
+        ShapeIterImpl(const size_t numel, const value_type& strides, bool start) : numel(numel), strides(strides) {
+            if (!start) {
+                this->cur_idx = numel;
             }
         }
 
         constexpr auto operator++() -> ShapeIterImpl& {
-            this->iter_once = true;
-            for (size_t i = cur_vals.size(); i >= 1; --i) {
-                if (++cur_vals[i - 1] >= shape[i - 1]) {
-                    if (i == 1) {
-                        cur_vals = shape;
-                        break;
-                    }
-                    cur_vals[i - 1] = 0;
-                } else {
-                    break;
-                }
-            }
+            this->cur_idx++;
             return *this;
         }
 
         constexpr auto operator!=(const ShapeIterImpl& other) const -> bool {
-            return !iter_once || (this->cur_vals != other.cur_vals) || (this->shape != other.shape);
+            return (this->cur_idx != other.cur_idx) || (this->numel != other.numel) || (this->strides != other.strides);
         }
 
         constexpr auto operator*() const -> const value_type {
-            return this->cur_vals;
+            return unflatten_index(this->cur_idx);
+        }
+
+        [[nodiscard]] constexpr auto unflatten_index(size_t flat_index) const -> value_type {
+            value_type idx(strides.size());
+            std::transform(
+                strides.begin(), strides.end(), idx.begin(), [&flat_index](size_t stride) constexpr {
+                    size_t idx = flat_index / stride;
+                    flat_index %= stride;
+                    return idx;
+                });
+
+            return idx;
         }
 
       private:
-        const value_type& shape;
-        value_type cur_vals;
-        bool iter_once{false};
+        const value_type& strides;
+        const size_t numel;
+        size_t cur_idx = 0;
     };
 };
