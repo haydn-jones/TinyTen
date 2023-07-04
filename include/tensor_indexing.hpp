@@ -23,61 +23,35 @@ namespace tt::inline v1 {
     // Indexing with vector
     template <typename T>
     constexpr auto Tensor<T>::operator()(const IndexType& indices) -> T& {
-        assert(indices.size() == shape_.size());
-        return this->data_[this->_flatten_index(indices)];
+        assert(indices.size() == this->shape_.size());
+        return this->data_[this->_ravel_index(indices)];
     }
 
     template <typename T>
     constexpr auto Tensor<T>::operator()(const IndexType& indices) const -> const T& {
-        assert(indices.size() == shape_.size());
-        return this->data_[this->_flatten_index(indices)];
+        assert(indices.size() == this->shape_.size());
+        return this->data_[this->_ravel_index(indices)];
     }
 
     template <typename T>
-    constexpr auto Tensor<T>::flatten_index(const IndexType& indices) const -> SizeType {
-        SizeType index = 0;
-        SizeType stride = 1;
-        for (int64_t i = this->shape_.size() - 1; i >= 0; --i) {
-            index += indices[i] * stride;
-            stride *= this->shape_[i];
-        }
-        return index;
+    constexpr auto Tensor<T>::ravel_index(const IndexType& indices) const -> SizeType {
+        return tt::ravel_index(indices, this->canon_strides_);
     }
 
     template <typename T>
-    constexpr auto Tensor<T>::unflatten_index(SizeType index) const -> IndexType {
-        IndexType result;
-        result.reserve(this->shape_.size());
-        for (int64_t i = static_cast<int64_t>(this->shape_.size()) - 1; i >= 0; --i) {
-            auto idx = index % this->shape_[i];
-            index /= this->shape_[i];
-            result.push_back(idx);
-        }
-
-        std::reverse(result.begin(), result.end());
-        return result;
+    constexpr auto Tensor<T>::unravel_index(SizeType index) const -> IndexType {
+        return tt::unravel_index(index, this->canon_strides_);
     }
 
     // Internal indexing, handles strided tensors
     template <typename T>
-    constexpr auto Tensor<T>::_unflatten_index(SizeType flat_index) const -> IndexType {
-        IndexType idx(shape_.size());
-        std::transform(
-            strides_.begin(), strides_.end(), idx.begin(), [&flat_index](size_t stride) constexpr {
-                size_t idx = flat_index / stride;
-                flat_index %= stride;
-                return idx;
-            });
-        return idx;
+    constexpr auto Tensor<T>::_unravel_index(SizeType flat_index) const -> IndexType {
+        return tt::unravel_index(flat_index, this->strides_);
     }
 
     // Internal indexing, handles strided tensors
     template <typename T>
-    constexpr auto Tensor<T>::_flatten_index(const IndexType& indices) const -> SizeType {
-        if (indices.size() != shape_.size()) {
-            throw std::runtime_error("flatten_index: size mismatch");
-        }
-        return std::transform_reduce(indices.begin(), indices.end(), strides_.begin(), static_cast<SizeType>(0),
-                                     std::plus<>(), std::multiplies<>());
+    constexpr auto Tensor<T>::_ravel_index(const IndexType& indices) const -> SizeType {
+        return tt::ravel_index(indices, this->strides_);
     }
 };  // namespace tt::inline v1

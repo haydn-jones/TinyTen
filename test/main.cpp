@@ -75,21 +75,21 @@ TEST_CASE("multi-dim indexing", "[Tensor]") {
 TEST_CASE("Index flattening", "[Tensor]") {
     Tensor<int> ten1({1, 3, 5, 10});
 
-    REQUIRE(ten1.flatten_index({0, 0, 0, 0}) == 0);
-    REQUIRE(ten1.flatten_index({0, 0, 0, 1}) == 1);
-    REQUIRE(ten1.flatten_index({0, 0, 0, 2}) == 2);
-    REQUIRE(ten1.flatten_index({0, 0, 1, 0}) == 10);
-    REQUIRE(ten1.flatten_index({0, 0, 1, 1}) == 11);
-    REQUIRE(ten1.flatten_index({0, 0, 2, 6}) == 26);
-    REQUIRE(ten1.flatten_index({0, 2, 4, 9}) == 149);
+    REQUIRE(ten1.ravel_index({0, 0, 0, 0}) == 0);
+    REQUIRE(ten1.ravel_index({0, 0, 0, 1}) == 1);
+    REQUIRE(ten1.ravel_index({0, 0, 0, 2}) == 2);
+    REQUIRE(ten1.ravel_index({0, 0, 1, 0}) == 10);
+    REQUIRE(ten1.ravel_index({0, 0, 1, 1}) == 11);
+    REQUIRE(ten1.ravel_index({0, 0, 2, 6}) == 26);
+    REQUIRE(ten1.ravel_index({0, 2, 4, 9}) == 149);
 
-    REQUIRE(ten1.flatten_index(0, 0, 0, 0) == 0);
-    REQUIRE(ten1.flatten_index(0, 0, 0, 1) == 1);
-    REQUIRE(ten1.flatten_index(0, 0, 0, 2) == 2);
-    REQUIRE(ten1.flatten_index(0, 0, 1, 0) == 10);
-    REQUIRE(ten1.flatten_index(0, 0, 1, 1) == 11);
-    REQUIRE(ten1.flatten_index(0, 0, 2, 6) == 26);
-    REQUIRE(ten1.flatten_index(0, 2, 4, 9) == 149);
+    REQUIRE(ten1.ravel_index(0, 0, 0, 0) == 0);
+    REQUIRE(ten1.ravel_index(0, 0, 0, 1) == 1);
+    REQUIRE(ten1.ravel_index(0, 0, 0, 2) == 2);
+    REQUIRE(ten1.ravel_index(0, 0, 1, 0) == 10);
+    REQUIRE(ten1.ravel_index(0, 0, 1, 1) == 11);
+    REQUIRE(ten1.ravel_index(0, 0, 2, 6) == 26);
+    REQUIRE(ten1.ravel_index(0, 2, 4, 9) == 149);
 }
 
 TEST_CASE("Strides", "[Tensor]") {
@@ -219,7 +219,7 @@ TEST_CASE("ShapeIter", "[Tensor]") {
 
     REQUIRE(indices.size() == 12);
     for (SizeType i = 0; i < indices.size(); i++) {
-        REQUIRE(ten.flatten_index(indices.at(i)) == i);
+        REQUIRE(ten.ravel_index(indices.at(i)) == i);
     }
 
     for (SizeType i = 0; i < indices.size(); i++) {
@@ -231,11 +231,19 @@ TEST_CASE("ShapeIter", "[Tensor]") {
     }
 
     for (auto& v : ten.shape_iter()) {
-        REQUIRE(ten.unflatten_index(ten.flatten_index(v)) == v);
+        REQUIRE(ten.unravel_index(ten.ravel_index(v)) == v);
     }
 }
 
 TEST_CASE("Permute", "[Tensor]") {
+    /*
+        0 1 2
+        3 4 5
+        ->
+        0 3
+        1 4
+        2 5
+    */
     Tensor<int> ten1 = Tensor<int>::iota({2, 3});
     Tensor<int> ten2 = ten1.permute({1, 0});
 
@@ -317,7 +325,7 @@ TEST_CASE("MultiDim-Indexing", "[Tensor]") {
         SizeType v = 0;
         for (SizeType i = 0; i < ten.shape(0); i++) {
             for (SizeType j = 0; j < ten.shape(1); j++) {
-                REQUIRE(ten.unflatten_index(v) == IndexType{i, j});
+                REQUIRE(ten.unravel_index(v) == IndexType{i, j});
                 v++;
             }
         }
@@ -327,7 +335,7 @@ TEST_CASE("MultiDim-Indexing", "[Tensor]") {
         SizeType v = 0;
         for (SizeType i = 0; i < ten.shape(0); i++) {
             for (SizeType j = 0; j < ten.shape(1); j++) {
-                REQUIRE(ten.flatten_index(IndexType{i, j}) == v);
+                REQUIRE(ten.ravel_index(IndexType{i, j}) == v);
                 v++;
             }
         }
@@ -335,7 +343,7 @@ TEST_CASE("MultiDim-Indexing", "[Tensor]") {
 
     SECTION("Unstrided Unflat-Flat") {
         for (SizeType i = 0; i < ten.numel(); i++) {
-            REQUIRE(ten.flatten_index(ten.unflatten_index(i)) == i);
+            REQUIRE(ten.ravel_index(ten.unravel_index(i)) == i);
         }
     }
 
@@ -353,7 +361,7 @@ TEST_CASE("MultiDim-Indexing", "[Tensor]") {
         SizeType v = 0;
         for (SizeType i = 0; i < ten2.shape(0); i++) {
             for (SizeType j = 0; j < ten2.shape(1); j++) {
-                REQUIRE(ten2.unflatten_index(v) == IndexType{i, j});
+                REQUIRE(ten2.unravel_index(v) == IndexType{i, j});
                 v++;
             }
         }
@@ -363,7 +371,7 @@ TEST_CASE("MultiDim-Indexing", "[Tensor]") {
         SizeType v = 0;
         for (SizeType i = 0; i < ten2.shape(0); i++) {
             for (SizeType j = 0; j < ten2.shape(1); j++) {
-                REQUIRE(ten2.flatten_index(IndexType{i, j}) == v);
+                REQUIRE(ten2.ravel_index(IndexType{i, j}) == v);
                 v++;
             }
         }
@@ -371,7 +379,7 @@ TEST_CASE("MultiDim-Indexing", "[Tensor]") {
 
     SECTION("Strided Unflat-Flat") {
         for (SizeType i = 0; i < ten2.numel(); i++) {
-            REQUIRE(ten2.flatten_index(ten2.unflatten_index(i)) == i);
+            REQUIRE(ten2.ravel_index(ten2.unravel_index(i)) == i);
         }
     }
 }

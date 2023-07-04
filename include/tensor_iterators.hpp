@@ -26,6 +26,6 @@ namespace tt::inline v1 {
 
     template <typename T>
     auto Tensor<T>::shape_iter() -> ShapeIter {
-        return ShapeIter(this->numel(), this->shape_);
+        return ShapeIter(this->numel(), this->canon_strides_);
     }
 };  // namespace tt::inline v1

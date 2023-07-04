@@ -58,18 +58,18 @@ namespace tt::inline v1 {
         }
 
         [[nodiscard]] constexpr auto shape() const noexcept -> const IndexType& {
-            return shape_;
+            return this->shape_;
         }
 
-        [[nodiscard]] constexpr auto shape(size_t i) const -> SizeType {
-            if (i >= shape_.size()) {
+        [[nodiscard]] constexpr auto shape(SizeType i) const -> SizeType {
+            if (i >= this->shape_.size()) {
                 throw std::runtime_error("shape: index out of bounds");
             }
-            return shape_[i];
+            return this->shape_[i];
         }
 
         [[nodiscard]] constexpr auto strides() const noexcept -> const IndexType& {
-            return strides_;
+            return this->strides_;
         }
 
         constexpr void reshape_(const IndexType& dimensions) {
@@ -83,8 +83,9 @@ namespace tt::inline v1 {
         }
 
         constexpr auto permute_(const IndexType& permutation) {
-            shape_ = permute_vec(shape_, permutation);
-            strides_ = permute_vec(strides_, permutation);
+            this->shape_ = permute_vec(this->shape_, permutation);
+            this->strides_ = permute_vec(this->strides_, permutation);
+            this->canon_strides_ = tt::_calc_strides(this->shape_);
         }
 
         constexpr auto permute(const IndexType& permutation) const -> Tensor {
@@ -101,24 +102,24 @@ namespace tt::inline v1 {
 
         template <typename... Args>
         constexpr auto operator()(Args... args) -> ValueType& {
-            assert(sizeof...(args) == shape_.size());
-            return data_[this->_flatten_index({static_cast<SizeType>(args)...})];
+            assert(sizeof...(args) == this->shape_.size());
+            return data_[this->_ravel_index({static_cast<SizeType>(args)...})];
         }
 
         template <typename... Args>
         constexpr auto operator()(Args... args) const -> const ValueType& {
-            assert(sizeof...(args) == shape_.size());
-            return data_[this->_flatten_index({static_cast<SizeType>(args)...})];
+            assert(sizeof...(args) == this->shape_.size());
+            return data_[this->_ravel_index({static_cast<SizeType>(args)...})];
         }
 
         template <typename... Args>
-        constexpr auto flatten_index(Args... args) const -> SizeType {
+        constexpr auto ravel_index(Args... args) const -> SizeType {
             IndexType indices{static_cast<SizeType>(args)...};
-            return this->flatten_index(indices);
+            return this->ravel_index(indices);
         }
-        [[nodiscard]] constexpr auto flatten_index(const IndexType& indices) const -> SizeType;
+        [[nodiscard]] constexpr auto ravel_index(const IndexType& indices) const -> SizeType;
 
-        [[nodiscard]] constexpr auto unflatten_index(SizeType index) const -> IndexType;
+        [[nodiscard]] constexpr auto unravel_index(SizeType index) const -> IndexType;
 
         // Iterators
         constexpr auto begin() -> typename ContainerType::iterator;
@@ -128,7 +129,7 @@ namespace tt::inline v1 {
         auto shape_iter() -> ShapeIter;
 
         [[nodiscard]] constexpr auto stride(int i) const -> SizeType {
-            return strides_[i];
+            return this->strides_[i];
         }
 
         constexpr auto map_(ValueType (*f)(ValueType)) -> Tensor& {
@@ -176,7 +177,10 @@ namespace tt::inline v1 {
       private:
         ContainerType data_;
         IndexType shape_;
+
+        // True strides
         IndexType strides_;
+        IndexType canon_strides_;
 
         template <typename U>
         friend class Tensor;
@@ -185,24 +189,18 @@ namespace tt::inline v1 {
             this->strides_ = strides;
         }
 
-        constexpr void _set_shape(const IndexType& dimensions) {
-            if (cumprod(dimensions) != this->numel()) {
+        constexpr void _set_shape(const IndexType& newshape) {
+            if (cumprod(newshape) != this->numel()) {
                 throw std::runtime_error("Invalid dimensions");
             }
 
-            shape_ = dimensions;
-
-            // Calculate strides
-            strides_.resize(shape_.size());
-            std::fill(strides_.begin(), strides_.end(), 1);
-
-            for (int i = shape_.size() - 2; i >= 0; --i) {
-                strides_[i] = strides_[i + 1] * shape_[i + 1];
-            }
+            this->shape_ = newshape;
+            this->strides_ = tt::_calc_strides(this->shape_);
+            this->canon_strides_ = this->strides_;
         }
 
         // Internal indexing, handles strided tensors
-        [[nodiscard]] constexpr auto _unflatten_index(SizeType flat_index) const -> IndexType;
-        [[nodiscard]] constexpr auto _flatten_index(const IndexType& indices) const -> SizeType;
+        [[nodiscard]] constexpr auto _unravel_index(SizeType flat_index) const -> IndexType;
+        [[nodiscard]] constexpr auto _ravel_index(const IndexType& indices) const -> SizeType;
     };
 };  // namespace tt::inline v1
