@@ -26,35 +26,40 @@ namespace tt::inline v1 {
         ////////////////////////////////////////////////////////////////////
         Tensor() = default;
 
-        Tensor(const IndexType& dimensions) {
-            size_t total_size = cumprod(dimensions);
-            this->data_.resize(total_size);
-            this->_set_shape(dimensions);
+        Tensor(const IndexType& shape) : shape_(shape) {
+            this->_calc_strides();
+            this->data_.resize(this->numel());
         }
 
-        Tensor(const IndexType& dimensions, const ValueType& value) : Tensor(dimensions) {
-            std::fill(data_.begin(), data_.end(), value);
+        Tensor(const IndexType shape, const ValueType& value) : Tensor(shape) {
+            std::fill(this->data_.begin(), this->data_.end(), value);
         }
 
         template <typename U = ValueType>
-        constexpr auto static iota(const IndexType& dimensions, U value = {}) -> Tensor {
-            Tensor tensor(dimensions);
+        constexpr auto static iota(const IndexType shape, U value = {}) -> Tensor {
+            Tensor tensor(shape);
             std::generate(tensor.begin(), tensor.end(), [&value] { return value++; });
             return tensor;
         }
 
-        auto static randn(const IndexType& dimensions) -> Tensor {
+        auto static randn(const IndexType shape) -> Tensor {
             std::random_device rd;
             std::mt19937 gen(rd());
             std::normal_distribution<> d(static_cast<ValueType>(0), static_cast<ValueType>(1));
-            Tensor tensor(dimensions);
+            Tensor tensor(shape);
 
             std::generate(tensor.begin(), tensor.end(), [&d, &gen] { return d(gen); });
             return tensor;
         }
 
         [[nodiscard]] constexpr auto numel() const noexcept -> SizeType {
-            return data_.size();
+            if (this->shape_.empty() && this->data_.empty()) {
+                return 0;
+            } else if (this->shape_.empty()) {
+                return 1;
+            } else {
+                return tt::cumprod(this->shape_);
+            }
         }
 
         [[nodiscard]] constexpr auto shape() const noexcept -> const IndexType& {
@@ -72,25 +77,29 @@ namespace tt::inline v1 {
             return this->strides_;
         }
 
-        constexpr void reshape_(const IndexType& dimensions) {
-            this->_set_shape(dimensions);
+        constexpr void reshape_(const IndexType& shape) {
+            if (cumprod(shape) != this->numel()) {
+                throw std::runtime_error("reshape: total size of new array must be unchanged");
+            }
+            this->shape_ = shape;
+            this->_calc_strides();
         }
 
-        constexpr auto reshape(const IndexType& dimensions) const -> Tensor {
+        constexpr auto reshape(const IndexType& shape) const -> Tensor {
             Tensor tensor(*this);
-            tensor.reshape_(dimensions);
+            tensor.reshape_(shape);
             return tensor;
         }
 
-        constexpr auto permute_(const IndexType& permutation) {
-            this->shape_ = permute_vec(this->shape_, permutation);
-            this->strides_ = permute_vec(this->strides_, permutation);
+        constexpr auto permute_(const IndexType& axes) {
+            this->shape_ = permute_vec(this->shape_, axes);
+            this->strides_ = permute_vec(this->strides_, axes);
             this->canon_strides_ = tt::_calc_strides(this->shape_);
         }
 
-        constexpr auto permute(const IndexType& permutation) const -> Tensor {
+        constexpr auto permute(const IndexType& axes) const -> Tensor {
             Tensor tensor(*this);
-            tensor.permute_(permutation);
+            tensor.permute_(axes);
             return tensor;
         }
 
@@ -103,13 +112,13 @@ namespace tt::inline v1 {
         template <typename... Args>
         constexpr auto operator()(Args... args) -> ValueType& {
             assert(sizeof...(args) == this->shape_.size());
-            return data_[this->_ravel_index({static_cast<SizeType>(args)...})];
+            return this->data_[tt::ravel_index({static_cast<SizeType>(args)...}, this->strides_)];
         }
 
         template <typename... Args>
         constexpr auto operator()(Args... args) const -> const ValueType& {
             assert(sizeof...(args) == this->shape_.size());
-            return data_[this->_ravel_index({static_cast<SizeType>(args)...})];
+            return this->data_[tt::ravel_index({static_cast<SizeType>(args)...}, this->strides_)];
         }
 
         template <typename... Args>
@@ -189,18 +198,9 @@ namespace tt::inline v1 {
             this->strides_ = strides;
         }
 
-        constexpr void _set_shape(const IndexType& newshape) {
-            if (cumprod(newshape) != this->numel()) {
-                throw std::runtime_error("Invalid dimensions");
-            }
-
-            this->shape_ = newshape;
+        constexpr void _calc_strides() {
             this->strides_ = tt::_calc_strides(this->shape_);
             this->canon_strides_ = this->strides_;
         }
-
-        // Internal indexing, handles strided tensors
-        [[nodiscard]] constexpr auto _unravel_index(SizeType flat_index) const -> IndexType;
-        [[nodiscard]] constexpr auto _ravel_index(const IndexType& indices) const -> SizeType;
     };
 };  // namespace tt::inline v1

@@ -19,14 +19,14 @@ TEST_CASE("Tensor operations", "[Tensor]") {
 
     SECTION("constructed with dimensions should have correct size") {
         TensorType tensor({4, 4, 4});
-        REQUIRE(tensor.numel() == 4 * 4 * 4);
+        auto numel = tensor.numel();
+        REQUIRE(numel == 4 * 4 * 4);
     }
 
     SECTION("indexing should work correctly") {
         TensorType tensor({4, 4, 4});
-        IndexType idx = {1, 2, 3};
-        tensor(idx) = 10;
-        REQUIRE(tensor(idx) == 10);
+        tensor({1, 2, 3}) = 10;
+        REQUIRE(tensor({1, 2, 3}) == 10);
     }
 
     SECTION("iteration should work correctly") {
