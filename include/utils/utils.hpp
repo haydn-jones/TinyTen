@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <cstddef>
 #include <numeric>
 #include <stdexcept>
@@ -31,7 +32,7 @@ namespace tt::inline v1 {
                                      std::plus<>(), std::multiplies<>());
     }
 
-    constexpr auto unravel_index(int64_t flat_index, const std::vector<int64_t>& strides) -> std::vector<int64_t> {
+    auto unravel_index(int64_t flat_index, const std::vector<int64_t>& strides) -> std::vector<int64_t> {
         std::vector<int64_t> idx(strides.size());
         std::transform(
             strides.begin(), strides.end(), idx.begin(), [&flat_index](int64_t stride) constexpr {
@@ -39,11 +40,25 @@ namespace tt::inline v1 {
                 flat_index %= stride;
                 return idx;
             });
+        return idx;
+    }
+
+    constexpr auto ravel_unravel(int64_t flat_index, const std::vector<int64_t>& strides,
+                                 const std::vector<int64_t>& canon_strides) -> int64_t {
+        if (strides == canon_strides) {
+            return flat_index;
+        }
+        int64_t idx = 0;
+        for (size_t i = 0; i < strides.size(); ++i) {
+            std::ldiv_t result = std::div(flat_index, canon_strides[i]);
+            idx += result.quot * strides[i];
+            flat_index = result.rem;
+        }
 
         return idx;
     }
 
-    constexpr auto _calc_strides(const std::vector<int64_t>& shape) -> std::vector<int64_t> {
+    auto _calc_strides(const std::vector<int64_t>& shape) -> std::vector<int64_t> {
         std::vector<int64_t> strides(shape.size(), 1);
         auto N = static_cast<int64_t>(shape.size());
         for (int64_t i = N - 2; i >= 0; --i) {
@@ -51,5 +66,4 @@ namespace tt::inline v1 {
         }
         return strides;
     }
-
 }  // namespace tt::inline v1

@@ -397,12 +397,18 @@ TEST_CASE("Strided-Indexing", "[Tensor]") {
     }
 }
 
-TEST_CASE("Benchmark ShapeIter", "[Tensor]") {
+TEST_CASE("Benchmark Iter", "[Tensor]") {
     auto ten = Tensor<int>({100, 100, 100});
 
     BENCHMARK("ShapeIter") {
         for (auto& v : ten.shape_iter()) {
             ten(v) = 1;
+        }
+    };
+
+    BENCHMARK("Flat") {
+        for (SizeType i = 0; i < ten.numel(); i++) {
+            ten.flat(i) = i;
         }
     };
 }

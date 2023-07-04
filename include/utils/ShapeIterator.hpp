@@ -22,7 +22,7 @@ class ShapeIter {
 
   private:
     const int64_t numel;
-    const std::vector<int64_t> strides;
+    const std::vector<int64_t> strides{};
 
     class ShapeIterImpl {
       public:
@@ -50,7 +50,7 @@ class ShapeIter {
         }
 
       private:
-        const value_type strides;
+        const value_type strides{};
         const int64_t numel;
 
         int64_t cur_flat = 0;
