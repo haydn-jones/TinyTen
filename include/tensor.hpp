@@ -1,25 +1,25 @@
 #pragma once
 
-#include <ShapeIterator.hpp>
 #include <algorithm>
 #include <cassert>
-#include <cmath>
-#include <concepts.hpp>
 #include <execution>
 #include <numeric>
-#include <operators.hpp>
 #include <random>
-#include <utils.hpp>
 #include <vector>
 
+#include "concepts.hpp"
+#include "utils/ShapeIterator.hpp"
+#include "utils/utils.hpp"
+
 namespace tt::inline v1 {
+    using SizeType = int64_t;
+    using IndexType = std::vector<int64_t>;
+
     template <typename T>
     class Tensor {
       public:
         using ValueType = T;
         using ContainerType = std::vector<T>;
-        using SizeType = typename ContainerType::size_type;
-        using IndexType = std::vector<size_t>;
 
         ////////////////////////////////////////////////////////////////////
         // Constructors
@@ -53,7 +53,7 @@ namespace tt::inline v1 {
             return tensor;
         }
 
-        constexpr auto numel() const noexcept -> SizeType {
+        [[nodiscard]] constexpr auto numel() const noexcept -> SizeType {
             return data_.size();
         }
 
@@ -61,7 +61,7 @@ namespace tt::inline v1 {
             return shape_;
         }
 
-        constexpr auto shape(size_t i) const -> SizeType {
+        [[nodiscard]] constexpr auto shape(size_t i) const -> SizeType {
             if (i >= shape_.size()) {
                 throw std::runtime_error("shape: index out of bounds");
             }
@@ -93,30 +93,11 @@ namespace tt::inline v1 {
             return tensor;
         }
 
-        constexpr auto flat(SizeType i) -> ValueType& {
-            if (i >= this->numel()) {
-                throw std::runtime_error("flat: index out of bounds");
-            }
-            return data_[i];
-        }
+        constexpr auto flat(SizeType i) -> ValueType&;
+        constexpr auto flat(SizeType i) const -> const ValueType&;
 
-        constexpr auto flat(SizeType i) const -> const ValueType& {
-            if (i >= this->numel()) {
-                throw std::runtime_error("flat: index out of bounds");
-            }
-            return data_[i];
-        }
-
-        // Indexing with vector
-        constexpr auto operator()(const IndexType& indices) -> ValueType& {
-            assert(indices.size() == shape_.size());
-            return data_[this->_flatten_index(indices)];
-        }
-
-        constexpr auto operator()(const IndexType& indices) const -> const ValueType& {
-            assert(indices.size() == shape_.size());
-            return data_[this->_flatten_index(indices)];
-        }
+        constexpr auto operator()(const IndexType& indices) -> ValueType&;
+        constexpr auto operator()(const IndexType& indices) const -> const ValueType&;
 
         template <typename... Args>
         constexpr auto operator()(Args... args) -> ValueType& {
@@ -130,50 +111,23 @@ namespace tt::inline v1 {
             return data_[this->_flatten_index({static_cast<SizeType>(args)...})];
         }
 
-        constexpr auto flatten_index(const IndexType& indices) const -> SizeType {
-            SizeType index = 0;
-            SizeType stride = 1;
-            for (int64_t i = this->shape_.size() - 1; i >= 0; --i) {
-                index += indices[i] * stride;
-                stride *= this->shape_[i];
-            }
-            return index;
-        }
-
-        constexpr auto unflatten_index(SizeType index) const -> IndexType {
-            IndexType result;
-            result.reserve(this->shape_.size());
-
-            for (int i = this->shape_.size() - 1; i >= 0; --i) {
-                result.emplace_back(index % this->shape_[i]);
-                index /= this->shape_[i];
-            }
-
-            std::reverse(result.begin(), result.end());
-            return result;
-        }
-
         template <typename... Args>
         constexpr auto flatten_index(Args... args) const -> SizeType {
             IndexType indices{static_cast<SizeType>(args)...};
             return this->flatten_index(indices);
         }
+        [[nodiscard]] constexpr auto flatten_index(const IndexType& indices) const -> SizeType;
+
+        [[nodiscard]] constexpr auto unflatten_index(SizeType index) const -> IndexType;
 
         // Iterators
-        constexpr auto begin() noexcept {
-            return data_.begin();
-        }
-        constexpr auto begin() const noexcept {
-            return data_.cbegin();
-        }
-        constexpr auto end() noexcept {
-            return data_.end();
-        }
-        constexpr auto end() const noexcept {
-            return data_.cend();
-        }
+        constexpr auto begin() -> typename ContainerType::iterator;
+        constexpr auto begin() const -> typename ContainerType::const_iterator;
+        constexpr auto end() -> typename ContainerType::iterator;
+        constexpr auto end() const -> typename ContainerType::const_iterator;
+        auto shape_iter() -> ShapeIter;
 
-        constexpr auto stride(int i) const -> SizeType {
+        [[nodiscard]] constexpr auto stride(int i) const -> SizeType {
             return strides_[i];
         }
 
@@ -189,53 +143,23 @@ namespace tt::inline v1 {
         ////////////////////////////////////////////////////////////////////
         // Trigonometric functions
         ////////////////////////////////////////////////////////////////////
-        constexpr auto sin_() -> Tensor& requires SupportsSin<ValueType> {
-            return this->map_(std::sin);
-        }
+        constexpr auto sin_() -> Tensor& requires SupportsSin<ValueType>;
+        constexpr auto sin() const -> Tensor;
 
-        constexpr auto sin() const -> Tensor {
-            return Tensor(*this).sin_();
-        }
+        constexpr auto cos_() -> Tensor& requires SupportsCos<ValueType>;
+        constexpr auto cos() const -> Tensor;
 
-        constexpr auto cos_() -> Tensor& requires SupportsCos<ValueType> {
-            return this->map_(std::cos);
-        }
+        constexpr auto tan_() -> Tensor& requires SupportsTan<ValueType>;
+        constexpr auto tan() const -> Tensor;
 
-        constexpr auto cos() const -> Tensor {
-            return Tensor(*this).cos_();
-        }
+        constexpr auto cot_() -> Tensor& requires SupportsCot<ValueType>;
+        constexpr auto cot() const -> Tensor;
 
-        constexpr auto tan_() -> Tensor& requires SupportsTan<ValueType> {
-            return this->map_(std::tan);
-        }
+        constexpr auto sec_() -> Tensor& requires SupportsSec<ValueType>;
+        constexpr auto sec() const -> Tensor;
 
-        constexpr auto tan() const -> Tensor {
-            return Tensor(*this).tan_();
-        }
-
-        constexpr auto cot_() -> Tensor& requires SupportsCot<ValueType> {
-            return this->map_([](ValueType x) constexpr { return static_cast<ValueType>(1) / std::tan(x); });
-        }
-
-        constexpr auto cot() const -> Tensor {
-            return Tensor(*this).cot_();
-        }
-
-        constexpr auto sec_() -> Tensor& requires SupportsSec<ValueType> {
-            return this->map_([](ValueType x) constexpr { return static_cast<ValueType>(1) / std::cos(x); });
-        }
-
-        constexpr auto sec() const -> Tensor {
-            return Tensor(*this).sec_();
-        }
-
-        constexpr auto csc_() -> Tensor& requires SupportsCsc<ValueType> {
-            return this->map_([](ValueType x) constexpr { return static_cast<ValueType>(1) / std::sin(x); });
-        }
-
-        constexpr auto csc() const -> Tensor {
-            return Tensor(*this).csc_();
-        }
+        constexpr auto csc_() -> Tensor& requires SupportsCsc<ValueType>;
+        constexpr auto csc() const -> Tensor;
 
         ////////////////////////////////////////////////////////////////////
         // Misc functions
@@ -247,10 +171,6 @@ namespace tt::inline v1 {
             std::transform(
                 this->begin(), this->end(), res.begin(), [](T & x) constexpr { return static_cast<U>(x); });
             return res;
-        }
-
-        auto shape_iter() -> ShapeIter {
-            return ShapeIter(this->numel(), this->shape_);
         }
 
       private:
@@ -282,24 +202,7 @@ namespace tt::inline v1 {
         }
 
         // Internal indexing, handles strided tensors
-        constexpr auto _unflatten_index(SizeType flat_index) const -> IndexType {
-            IndexType idx(shape_.size());
-            std::transform(
-                strides_.begin(), strides_.end(), idx.begin(), [&flat_index](size_t stride) constexpr {
-                    size_t idx = flat_index / stride;
-                    flat_index %= stride;
-                    return idx;
-                });
-            return idx;
-        }
-
-        // Internal indexing, handles strided tensors
-        constexpr auto _flatten_index(const IndexType& indices) const -> SizeType {
-            if (indices.size() != shape_.size()) {
-                throw std::runtime_error("flatten_index: size mismatch");
-            }
-            return std::transform_reduce(indices.begin(), indices.end(), strides_.begin(), static_cast<SizeType>(0),
-                                         std::plus<>(), std::multiplies<>());
-        }
+        [[nodiscard]] constexpr auto _unflatten_index(SizeType flat_index) const -> IndexType;
+        [[nodiscard]] constexpr auto _flatten_index(const IndexType& indices) const -> SizeType;
     };
 };  // namespace tt::inline v1

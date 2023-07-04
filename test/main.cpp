@@ -3,12 +3,14 @@
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 #include <cstdint>
 #include <iostream>
-#include <tensor.hpp>
 #include <vector>
 
+#include "TinyTensor.hpp"
+
+using namespace tt;
+
 TEST_CASE("Tensor operations", "[Tensor]") {
-    using TensorType = tt::Tensor<int>;
-    using IndexType = TensorType::IndexType;
+    using TensorType = Tensor<int>;
 
     SECTION("default constructed tensor should be empty") {
         TensorType tensor;
@@ -42,7 +44,7 @@ TEST_CASE("Tensor operations", "[Tensor]") {
 }
 
 TEST_CASE("iota", "[Tensor]") {
-    using TensorType1 = tt::Tensor<int>;
+    using TensorType1 = Tensor<int>;
 
     auto tensor1 = TensorType1::iota({2, 2});
     REQUIRE(tensor1.numel() == 4);
@@ -51,7 +53,7 @@ TEST_CASE("iota", "[Tensor]") {
     REQUIRE(tensor1(1, 0) == 2);
     REQUIRE(tensor1(1, 1) == 3);
 
-    using TensorType2 = tt::Tensor<double>;
+    using TensorType2 = Tensor<double>;
 
     auto tensor2 = TensorType1::iota({2, 2});
     REQUIRE(tensor2.numel() == 4);
@@ -62,7 +64,7 @@ TEST_CASE("iota", "[Tensor]") {
 }
 
 TEST_CASE("multi-dim indexing", "[Tensor]") {
-    tt::Tensor<int> ten({1, 3, 5, 10});
+    Tensor<int> ten({1, 3, 5, 10});
 
     REQUIRE(ten(0, 0, 0, 0) == 0);
 
@@ -71,7 +73,7 @@ TEST_CASE("multi-dim indexing", "[Tensor]") {
 }
 
 TEST_CASE("Index flattening", "[Tensor]") {
-    tt::Tensor<int> ten1({1, 3, 5, 10});
+    Tensor<int> ten1({1, 3, 5, 10});
 
     REQUIRE(ten1.flatten_index({0, 0, 0, 0}) == 0);
     REQUIRE(ten1.flatten_index({0, 0, 0, 1}) == 1);
@@ -91,7 +93,7 @@ TEST_CASE("Index flattening", "[Tensor]") {
 }
 
 TEST_CASE("Strides", "[Tensor]") {
-    tt::Tensor<int> ten1 = tt::Tensor<int>::iota({1, 3, 5, 10});
+    Tensor<int> ten1 = Tensor<int>::iota({1, 3, 5, 10});
 
     // ensure that the strides are correct
     REQUIRE(ten1.stride(0) == 150);
@@ -110,16 +112,16 @@ TEST_CASE("Strides", "[Tensor]") {
 
     // out of place reshape should copy the data
     auto ten2 = ten1.reshape({1, 10, 5, 3});
-    for (size_t i = 0; i < ten2.numel(); ++i) {
+    for (SizeType i = 0; i < ten2.numel(); ++i) {
         REQUIRE(ten2.flat(i) == i);
     }
 }
 
 TEST_CASE("Sum", "[Tensor]") {
-    tt::Tensor<int> ten1({2, 3});
-    tt::Tensor<int> ten2 = tt::Tensor<int>::iota({2, 3});
+    Tensor<int> ten1({2, 3});
+    Tensor<int> ten2 = Tensor<int>::iota({2, 3});
 
-    tt::Tensor<int> ten3 = ten1 + ten2;
+    Tensor<int> ten3 = ten1 + ten2;
 
     REQUIRE(ten3(0, 0) == 0);
     REQUIRE(ten3(0, 1) == 1);
@@ -128,7 +130,7 @@ TEST_CASE("Sum", "[Tensor]") {
     REQUIRE(ten3(1, 1) == 4);
     REQUIRE(ten3(1, 2) == 5);
 
-    tt::Tensor<float> ten4 = ten2.astype<float>() + tt::Tensor<float>::iota({2, 3});
+    Tensor<float> ten4 = ten2.astype<float>() + Tensor<float>::iota({2, 3});
 
     REQUIRE(ten4(0, 0) == 0.0f);
     REQUIRE(ten4(0, 1) == 2.0f);
@@ -139,10 +141,10 @@ TEST_CASE("Sum", "[Tensor]") {
 }
 
 TEST_CASE("Subtraction", "[Tensor]") {
-    tt::Tensor<int> ten1({2, 3});
-    tt::Tensor<int> ten2 = tt::Tensor<int>::iota({2, 3});
+    Tensor<int> ten1({2, 3});
+    Tensor<int> ten2 = Tensor<int>::iota({2, 3});
 
-    tt::Tensor<int> ten3 = ten1 - ten2;
+    Tensor<int> ten3 = ten1 - ten2;
 
     REQUIRE(ten3(0, 0) == 0);
     REQUIRE(ten3(0, 1) == -1);
@@ -151,7 +153,7 @@ TEST_CASE("Subtraction", "[Tensor]") {
     REQUIRE(ten3(1, 1) == -4);
     REQUIRE(ten3(1, 2) == -5);
 
-    tt::Tensor<float> ten4 = ten2.astype<float>() - tt::Tensor<float>::iota({2, 3});
+    Tensor<float> ten4 = ten2.astype<float>() - Tensor<float>::iota({2, 3});
 
     REQUIRE(ten4(0, 0) == 0.0f);
     REQUIRE(ten4(0, 1) == 0.0f);
@@ -162,10 +164,10 @@ TEST_CASE("Subtraction", "[Tensor]") {
 }
 
 TEST_CASE("Multiplication", "[Tensor]") {
-    tt::Tensor<int> ten1({2, 3});
-    tt::Tensor<int> ten2 = tt::Tensor<int>::iota({2, 3});
+    Tensor<int> ten1({2, 3});
+    Tensor<int> ten2 = Tensor<int>::iota({2, 3});
 
-    tt::Tensor<int> ten3 = ten1 * ten2;
+    Tensor<int> ten3 = ten1 * ten2;
 
     REQUIRE(ten3(0, 0) == 0);
     REQUIRE(ten3(0, 1) == 0);
@@ -174,7 +176,7 @@ TEST_CASE("Multiplication", "[Tensor]") {
     REQUIRE(ten3(1, 1) == 0);
     REQUIRE(ten3(1, 2) == 0);
 
-    tt::Tensor<float> ten4 = ten2.astype<float>() * tt::Tensor<float>::iota({2, 3});
+    Tensor<float> ten4 = ten2.astype<float>() * Tensor<float>::iota({2, 3});
 
     REQUIRE(ten4(0, 0) == 0.0f);
     REQUIRE(ten4(0, 1) == 1.0f);
@@ -185,10 +187,10 @@ TEST_CASE("Multiplication", "[Tensor]") {
 }
 
 TEST_CASE("Division", "[Tensor]") {
-    tt::Tensor<int> ten1({2, 3}, 2);                          // Tensor of twos
-    tt::Tensor<int> ten2 = tt::Tensor<int>::iota({2, 3}, 1);  // Tensor from 1 to 6
+    Tensor<int> ten1({2, 3}, 2);                      // Tensor of twos
+    Tensor<int> ten2 = Tensor<int>::iota({2, 3}, 1);  // Tensor from 1 to 6
 
-    tt::Tensor<int> ten3 = ten1 / ten2;
+    Tensor<int> ten3 = ten1 / ten2;
 
     REQUIRE(ten3(0, 0) == 2);
     REQUIRE(ten3(0, 1) == 1);
@@ -197,7 +199,7 @@ TEST_CASE("Division", "[Tensor]") {
     REQUIRE(ten3(1, 1) == 0);
     REQUIRE(ten3(1, 2) == 0);
 
-    tt::Tensor<float> ten4 = ten1.astype<float>() / tt::Tensor<float>::iota({2, 3}, 1.0f);  // Tensor from 1.0 to 6.0
+    Tensor<float> ten4 = ten1.astype<float>() / Tensor<float>::iota({2, 3}, 1.0f);  // Tensor from 1.0 to 6.0
 
     REQUIRE(ten4(0, 0) == 2.0f);
     REQUIRE(ten4(0, 1) == 1.0f);
@@ -208,23 +210,23 @@ TEST_CASE("Division", "[Tensor]") {
 }
 
 TEST_CASE("ShapeIter", "[Tensor]") {
-    tt::Tensor<int> ten({1, 3, 4});
+    Tensor<int> ten({1, 3, 4});
 
-    std::vector<std::vector<size_t>> indices;
+    std::vector<std::vector<SizeType>> indices;
     for (auto& v : ten.shape_iter()) {
         indices.push_back(v);
     }
 
     REQUIRE(indices.size() == 12);
-    for (size_t i = 0; i < indices.size(); i++) {
+    for (SizeType i = 0; i < indices.size(); i++) {
         REQUIRE(ten.flatten_index(indices.at(i)) == i);
     }
 
-    for (size_t i = 0; i < indices.size(); i++) {
+    for (SizeType i = 0; i < indices.size(); i++) {
         ten(indices.at(i)) = i;
     }
 
-    for (size_t i = 0; i < indices.size(); i++) {
+    for (SizeType i = 0; i < indices.size(); i++) {
         REQUIRE(ten(indices.at(i)) == i);
     }
 
@@ -234,8 +236,8 @@ TEST_CASE("ShapeIter", "[Tensor]") {
 }
 
 TEST_CASE("Permute", "[Tensor]") {
-    tt::Tensor<int> ten1 = tt::Tensor<int>::iota({2, 3});
-    tt::Tensor<int> ten2 = ten1.permute({1, 0});
+    Tensor<int> ten1 = Tensor<int>::iota({2, 3});
+    Tensor<int> ten2 = ten1.permute({1, 0});
 
     REQUIRE(ten2(0, 0) == 0);
     REQUIRE(ten2(0, 1) == 3);
@@ -244,7 +246,7 @@ TEST_CASE("Permute", "[Tensor]") {
     REQUIRE(ten2(2, 0) == 2);
     REQUIRE(ten2(2, 1) == 5);
 
-    tt::Tensor<int> ten3 = ten2.permute({1, 0});
+    Tensor<int> ten3 = ten2.permute({1, 0});
 
     REQUIRE(ten3(0, 0) == 0);
     REQUIRE(ten3(0, 1) == 1);
@@ -258,7 +260,7 @@ TEST_CASE("Permute", "[Tensor]") {
 }
 
 TEST_CASE("TrigFunctions", "[Tensor]") {
-    tt::Tensor<float> ten = tt::Tensor<float>::iota({2, 5}, 1.0f);
+    Tensor<float> ten = Tensor<float>::iota({2, 5}, 1.0f);
 
     SECTION("Cos") {
         auto cos = ten.cos();
@@ -297,15 +299,14 @@ TEST_CASE("TrigFunctions", "[Tensor]") {
 }
 
 TEST_CASE("MultiDim-Indexing", "[Tensor]") {
-    using TensorType = tt::Tensor<int>;
-    using IndexType = TensorType::IndexType;
+    using TensorType = Tensor<int>;
 
     TensorType ten = TensorType::iota({2, 3});
 
     SECTION("Unstrided multidim indexing") {
-        size_t v = 0;
-        for (size_t i = 0; i < ten.shape(0); i++) {
-            for (size_t j = 0; j < ten.shape(1); j++) {
+        SizeType v = 0;
+        for (SizeType i = 0; i < ten.shape(0); i++) {
+            for (SizeType j = 0; j < ten.shape(1); j++) {
                 REQUIRE(ten(i, j) == v);
                 v++;
             }
@@ -313,9 +314,9 @@ TEST_CASE("MultiDim-Indexing", "[Tensor]") {
     }
 
     SECTION("Unstrided unflattening") {
-        size_t v = 0;
-        for (size_t i = 0; i < ten.shape(0); i++) {
-            for (size_t j = 0; j < ten.shape(1); j++) {
+        SizeType v = 0;
+        for (SizeType i = 0; i < ten.shape(0); i++) {
+            for (SizeType j = 0; j < ten.shape(1); j++) {
                 REQUIRE(ten.unflatten_index(v) == IndexType{i, j});
                 v++;
             }
@@ -323,9 +324,9 @@ TEST_CASE("MultiDim-Indexing", "[Tensor]") {
     }
 
     SECTION("Unstrided flattening") {
-        size_t v = 0;
-        for (size_t i = 0; i < ten.shape(0); i++) {
-            for (size_t j = 0; j < ten.shape(1); j++) {
+        SizeType v = 0;
+        for (SizeType i = 0; i < ten.shape(0); i++) {
+            for (SizeType j = 0; j < ten.shape(1); j++) {
                 REQUIRE(ten.flatten_index(IndexType{i, j}) == v);
                 v++;
             }
@@ -333,7 +334,7 @@ TEST_CASE("MultiDim-Indexing", "[Tensor]") {
     }
 
     SECTION("Unstrided Unflat-Flat") {
-        for (size_t i = 0; i < ten.numel(); i++) {
+        for (SizeType i = 0; i < ten.numel(); i++) {
             REQUIRE(ten.flatten_index(ten.unflatten_index(i)) == i);
         }
     }
@@ -341,17 +342,17 @@ TEST_CASE("MultiDim-Indexing", "[Tensor]") {
     auto ten2 = ten.permute({1, 0});
 
     SECTION("Strided multidim indexing") {
-        for (size_t i = 0; i < ten2.shape(0); i++) {
-            for (size_t j = 0; j < ten2.shape(1); j++) {
+        for (SizeType i = 0; i < ten2.shape(0); i++) {
+            for (SizeType j = 0; j < ten2.shape(1); j++) {
                 REQUIRE(ten2(i, j) == ten(j, i));
             }
         }
     }
 
     SECTION("Strided unflattening") {
-        size_t v = 0;
-        for (size_t i = 0; i < ten2.shape(0); i++) {
-            for (size_t j = 0; j < ten2.shape(1); j++) {
+        SizeType v = 0;
+        for (SizeType i = 0; i < ten2.shape(0); i++) {
+            for (SizeType j = 0; j < ten2.shape(1); j++) {
                 REQUIRE(ten2.unflatten_index(v) == IndexType{i, j});
                 v++;
             }
@@ -359,9 +360,9 @@ TEST_CASE("MultiDim-Indexing", "[Tensor]") {
     }
 
     SECTION("Strided flattening") {
-        size_t v = 0;
-        for (size_t i = 0; i < ten2.shape(0); i++) {
-            for (size_t j = 0; j < ten2.shape(1); j++) {
+        SizeType v = 0;
+        for (SizeType i = 0; i < ten2.shape(0); i++) {
+            for (SizeType j = 0; j < ten2.shape(1); j++) {
                 REQUIRE(ten2.flatten_index(IndexType{i, j}) == v);
                 v++;
             }
@@ -369,14 +370,14 @@ TEST_CASE("MultiDim-Indexing", "[Tensor]") {
     }
 
     SECTION("Strided Unflat-Flat") {
-        for (size_t i = 0; i < ten2.numel(); i++) {
+        for (SizeType i = 0; i < ten2.numel(); i++) {
             REQUIRE(ten2.flatten_index(ten2.unflatten_index(i)) == i);
         }
     }
 }
 
 TEST_CASE("Benchmark ShapeIter", "[Tensor]") {
-    auto ten = tt::Tensor<int>({100, 100, 100});
+    auto ten = Tensor<int>({100, 100, 100});
 
     BENCHMARK("ShapeIter") {
         for (auto& v : ten.shape_iter()) {

@@ -1,37 +1,17 @@
 #pragma once
 
-#include <concepts>
 #include <functional>
 #include <stdexcept>
-#include <type_traits>
+
+#include "concepts.hpp"
+#include "tensor.hpp"
 
 namespace tt::inline v1 {
-    namespace details {
-        // clang-format off
-        template <typename T>
-        concept add_operator_supported = requires(T& t, T& u) {
-            { t + u } -> std::same_as<T>;
-        };
-        template <typename T>
-        concept sub_operator_supported = requires(T& t, T& u) {
-            { t - u } -> std::same_as<T>;
-        };
-        template <typename T>
-        concept mul_operator_supported = requires(T& t, T& u) {
-            { t * u } -> std::same_as<T>;
-        };
-        template <typename T>
-        concept div_operator_supported = requires(T& t, T& u) {
-            { t / u } -> std::same_as<T>;
-        };
-        // clang-format on
-    }  // namespace details
-
     template <typename T>
     class Tensor;
 
     template <typename T>
-    constexpr auto operator+(const Tensor<T>& a, const Tensor<T>& b) requires details::add_operator_supported<T> {
+    constexpr auto operator+(const Tensor<T>& a, const Tensor<T>& b) requires SupportsAdd<T> {
         if (a.shape() != b.shape()) {
             throw std::runtime_error("Shapes are not the same");
         }
@@ -41,7 +21,7 @@ namespace tt::inline v1 {
     }
 
     template <typename T>
-    constexpr auto operator-(const Tensor<T>& a, const Tensor<T>& b) requires details::sub_operator_supported<T> {
+    constexpr auto operator-(const Tensor<T>& a, const Tensor<T>& b) requires SupportsSub<T> {
         if (a.shape() != b.shape()) {
             throw std::runtime_error("Shapes are not the same");
         }
@@ -51,7 +31,7 @@ namespace tt::inline v1 {
     }
 
     template <typename T>
-    constexpr auto operator*(const Tensor<T>& a, const Tensor<T>& b) requires details::mul_operator_supported<T> {
+    constexpr auto operator*(const Tensor<T>& a, const Tensor<T>& b) requires SupportsMul<T> {
         if (a.shape() != b.shape()) {
             throw std::runtime_error("Shapes are not the same");
         }
@@ -61,7 +41,7 @@ namespace tt::inline v1 {
     }
 
     template <typename T>
-    constexpr auto operator/(const Tensor<T>& a, const Tensor<T>& b) requires details::div_operator_supported<T> {
+    constexpr auto operator/(const Tensor<T>& a, const Tensor<T>& b) requires SupportsDiv<T> {
         if (a.shape() != b.shape()) {
             throw std::runtime_error("Shapes are not the same");
         }
