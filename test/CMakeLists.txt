@@ -2,7 +2,7 @@
 
 include(../cmake/CPM.cmake)
 
-CPMAddPackage("gh:catchorg/Catch2@3.2.1")
+CPMAddPackage("gh:catchorg/Catch2@3.3.2")
 
 add_executable(test main.cpp)
 target_link_libraries(test PRIVATE TinyTen Catch2::Catch2WithMain)

@@ -9,7 +9,7 @@ namespace tt::inline v1 {
         if (i >= this->numel()) {
             throw std::runtime_error("flat: index out of bounds");
         }
-        return this->data_[i];
+        return this->data_[tt::ravel_index(tt::unravel_index(i, this->canon_strides_), this->strides_)];
     }
 
     template <typename T>
@@ -17,7 +17,7 @@ namespace tt::inline v1 {
         if (i >= this->numel()) {
             throw std::runtime_error("flat: index out of bounds");
         }
-        return this->data_[i];
+        return this->data_[tt::ravel_index(tt::unravel_index(i, this->canon_strides_), this->strides_)];
     }
 
     // Indexing with vector

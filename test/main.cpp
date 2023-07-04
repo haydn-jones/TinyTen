@@ -306,7 +306,7 @@ TEST_CASE("TrigFunctions", "[Tensor]") {
     }
 }
 
-TEST_CASE("MultiDim-Indexing", "[Tensor]") {
+TEST_CASE("Strided-Indexing", "[Tensor]") {
     using TensorType = Tensor<int>;
 
     TensorType ten = TensorType::iota({2, 3});
@@ -347,6 +347,12 @@ TEST_CASE("MultiDim-Indexing", "[Tensor]") {
         }
     }
 
+    SECTION("Unstrided Flat Indexing") {
+        for (SizeType i = 0; i < ten.numel(); i++) {
+            REQUIRE(ten.flat(i) == i);
+        }
+    }
+
     auto ten2 = ten.permute({1, 0});
 
     SECTION("Strided multidim indexing") {
@@ -380,6 +386,13 @@ TEST_CASE("MultiDim-Indexing", "[Tensor]") {
     SECTION("Strided Unflat-Flat") {
         for (SizeType i = 0; i < ten2.numel(); i++) {
             REQUIRE(ten2.ravel_index(ten2.unravel_index(i)) == i);
+        }
+    }
+
+    SECTION("Strided Flat Indexing") {
+        std::vector<int> v{0, 3, 1, 4, 2, 5};
+        for (SizeType i = 0; i < ten2.numel(); i++) {
+            REQUIRE(ten2.flat(i) == v[i]);
         }
     }
 }
