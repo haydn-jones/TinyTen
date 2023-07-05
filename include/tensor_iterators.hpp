@@ -3,25 +3,40 @@
 #include "tensor.hpp"
 
 namespace tt::inline v1 {
-    // Iterators
     template <typename T>
     constexpr auto Tensor<T>::begin() -> typename Tensor::ContainerType::iterator {
-        return this->data_.begin();
+        if (this->_is_contiguous()) {
+            return this->data_.begin();
+        } else {
+            throw std::runtime_error("begin: tensor is not contiguous");
+        }
     }
 
     template <typename T>
     constexpr auto Tensor<T>::begin() const -> typename Tensor::ContainerType::const_iterator {
-        return this->data_.cbegin();
+        if (this->_is_contiguous()) {
+            return this->data_.cbegin();
+        } else {
+            throw std::runtime_error("begin: tensor is not contiguous");
+        }
     }
 
     template <typename T>
     constexpr auto Tensor<T>::end() -> typename Tensor::ContainerType::iterator {
-        return this->data_.end();
+        if (this->_is_contiguous()) {
+            return this->data_.end();
+        } else {
+            throw std::runtime_error("end: tensor is not contiguous");
+        }
     }
 
     template <typename T>
     constexpr auto Tensor<T>::end() const -> typename Tensor::ContainerType::const_iterator {
-        return this->data_.cend();
+        if (this->_is_contiguous()) {
+            return this->data_.cend();
+        } else {
+            throw std::runtime_error("end: tensor is not contiguous");
+        }
     }
 
     template <typename T>

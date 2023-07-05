@@ -412,3 +412,27 @@ TEST_CASE("Benchmark Iter", "[Tensor]") {
         }
     };
 }
+
+TEST_CASE("Data iterators", "[Tensor]") {
+    auto ten = Tensor<int>::iota({2, 3});
+
+    SECTION("Unstrided data iter") {
+        SizeType v = 0;
+        for (auto& val : ten) {
+            REQUIRE(val == v);
+            v++;
+        }
+    }
+
+    ten.permute_({1, 0});
+
+    SECTION("Strided data iter") {
+        std::vector<int> v{0, 3, 1, 4, 2, 5};
+        SizeType i = 0;
+        REQUIRE_THROWS(ten.begin());
+        // for (auto& val : ten) {
+        // REQUIRE(val == v[i]);
+        // i++;
+        // }
+    }
+}

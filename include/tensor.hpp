@@ -52,30 +52,13 @@ namespace tt::inline v1 {
             return tensor;
         }
 
-        [[nodiscard]] constexpr auto numel() const noexcept -> SizeType {
-            if (this->shape_.empty() && this->data_.empty()) {
-                return 0;
-            } else if (this->shape_.empty()) {
-                return 1;
-            } else {
-                return tt::cumprod(this->shape_);
-            }
-        }
+        [[nodiscard]] constexpr auto numel() const noexcept -> SizeType;
 
-        [[nodiscard]] constexpr auto shape() const noexcept -> const IndexType& {
-            return this->shape_;
-        }
+        [[nodiscard]] constexpr auto shape() const noexcept -> const IndexType&;
+        [[nodiscard]] constexpr auto shape(SizeType i) const -> SizeType;
 
-        [[nodiscard]] constexpr auto shape(SizeType i) const -> SizeType {
-            if (i >= this->shape_.size()) {
-                throw std::runtime_error("shape: index out of bounds");
-            }
-            return this->shape_[i];
-        }
-
-        [[nodiscard]] constexpr auto strides() const noexcept -> const IndexType& {
-            return this->strides_;
-        }
+        [[nodiscard]] constexpr auto strides() const noexcept -> const IndexType&;
+        [[nodiscard]] constexpr auto stride(int i) const -> SizeType;
 
         constexpr void reshape_(const IndexType& shape) {
             if (cumprod(shape) != this->numel()) {
@@ -126,6 +109,7 @@ namespace tt::inline v1 {
             IndexType indices{static_cast<SizeType>(args)...};
             return this->ravel_index(indices);
         }
+
         [[nodiscard]] constexpr auto ravel_index(const IndexType& indices) const -> SizeType;
 
         [[nodiscard]] constexpr auto unravel_index(SizeType index) const -> IndexType;
@@ -136,19 +120,6 @@ namespace tt::inline v1 {
         constexpr auto end() -> typename ContainerType::iterator;
         constexpr auto end() const -> typename ContainerType::const_iterator;
         auto shape_iter() -> ShapeIter;
-
-        [[nodiscard]] constexpr auto stride(int i) const -> SizeType {
-            return this->strides_[i];
-        }
-
-        constexpr auto map_(ValueType (*f)(ValueType)) -> Tensor& {
-            std::transform(std::execution::unseq, this->data_.begin(), this->data_.end(), this->data_.begin(), f);
-            return *this;
-        }
-
-        constexpr auto map(ValueType (*f)(ValueType)) const -> Tensor {
-            return Tensor(*this).map_(f);
-        }
 
         ////////////////////////////////////////////////////////////////////
         // Trigonometric functions
@@ -183,6 +154,15 @@ namespace tt::inline v1 {
             return res;
         }
 
+        constexpr auto map_(ValueType (*f)(ValueType)) -> Tensor& {
+            std::transform(std::execution::unseq, this->data_.begin(), this->data_.end(), this->data_.begin(), f);
+            return *this;
+        }
+
+        constexpr auto map(ValueType (*f)(ValueType)) const -> Tensor {
+            return Tensor(*this).map_(f);
+        }
+
       private:
         ContainerType data_;
         IndexType shape_;
@@ -202,5 +182,7 @@ namespace tt::inline v1 {
             this->strides_ = tt::_calc_strides(this->shape_);
             this->canon_strides_ = this->strides_;
         }
+
+        constexpr auto _is_contiguous() const -> bool;
     };
 };  // namespace tt::inline v1
