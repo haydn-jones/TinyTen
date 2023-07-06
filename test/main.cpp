@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "TinyTensor.hpp"
+#include "test_utils.hpp"
 
 using namespace tt;
 
@@ -429,10 +430,42 @@ TEST_CASE("Data iterators", "[Tensor]") {
     SECTION("Strided data iter") {
         std::vector<int> v{0, 3, 1, 4, 2, 5};
         SizeType i = 0;
-        REQUIRE_THROWS(ten.begin());
-        // for (auto& val : ten) {
-        // REQUIRE(val == v[i]);
-        // i++;
-        // }
+        for (auto& val : ten.strided_iter()) {
+            REQUIRE(val == v[i]);
+            i++;
+        }
     }
+
+    auto ten2 = Tensor<int>::iota({23, 31});
+
+    SECTION("Iter write") {
+        for (auto& val : ten2) {
+            val = 1;
+        }
+        for (auto& val : ten2) {
+            REQUIRE(val == 1);
+        }
+    }
+}
+
+TEST_CASE("Data iterators2", "[Tensor]") {
+    auto ten2 = Tensor<int>::iota({100, 100, 100});
+    BENCHMARK("Iter write, STL range") {
+        for (auto& val : ten2) {
+            val = xoshiro128_p();
+        }
+    };
+
+    BENCHMARK("Iter write, Strided range, (unstrided)") {
+        for (auto& val : ten2) {
+            val = xoshiro128_p();
+        }
+    };
+
+    ten2.permute_({1, 0, 2});
+    BENCHMARK("Iter write, Strided range, (strided)") {
+        for (auto& val : ten2.strided_iter()) {
+            val = xoshiro128_p();
+        }
+    };
 }

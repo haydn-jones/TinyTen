@@ -4,7 +4,7 @@
 #include <utility>
 #include <vector>
 
-#include "utils/utils.hpp"
+#include "utils.hpp"
 
 class ShapeIter {
     class ShapeIterImpl;

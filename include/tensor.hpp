@@ -5,10 +5,12 @@
 #include <execution>
 #include <numeric>
 #include <random>
+#include <utility>
 #include <vector>
 
 #include "concepts.hpp"
 #include "utils/ShapeIterator.hpp"
+#include "utils/StridedIterator.hpp"
 #include "utils/utils.hpp"
 
 namespace tt::inline v1 {
@@ -26,7 +28,7 @@ namespace tt::inline v1 {
         ////////////////////////////////////////////////////////////////////
         Tensor() = default;
 
-        Tensor(const IndexType& shape) : shape_(shape) {
+        Tensor(IndexType shape) : shape_(std::move(shape)) {
             this->_calc_strides();
             this->data_.resize(this->numel());
         }
@@ -120,6 +122,7 @@ namespace tt::inline v1 {
         constexpr auto end() -> typename ContainerType::iterator;
         constexpr auto end() const -> typename ContainerType::const_iterator;
         auto shape_iter() -> ShapeIter;
+        auto strided_iter() -> StridedIter<ValueType>;
 
         ////////////////////////////////////////////////////////////////////
         // Trigonometric functions
@@ -183,6 +186,6 @@ namespace tt::inline v1 {
             this->canon_strides_ = this->strides_;
         }
 
-        constexpr auto _is_contiguous() const -> bool;
+        [[nodiscard]] constexpr auto _is_contiguous() const -> bool;
     };
 };  // namespace tt::inline v1

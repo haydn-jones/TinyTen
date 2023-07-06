@@ -43,4 +43,9 @@ namespace tt::inline v1 {
     auto Tensor<T>::shape_iter() -> ShapeIter {
         return ShapeIter(this->numel(), this->canon_strides_);
     }
+
+    template <typename T>
+    auto Tensor<T>::strided_iter() -> StridedIter<T> {
+        return StridedIter<T>(&this->data_[0], this->numel(), this->strides_, this->canon_strides_);
+    }
 };  // namespace tt::inline v1
