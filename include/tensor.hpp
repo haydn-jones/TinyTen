@@ -10,7 +10,7 @@
 
 #include "concepts.hpp"
 #include "utils/ShapeIterator.hpp"
-#include "utils/StridedIterator.hpp"
+#include "utils/TensorIterator.hpp"
 #include "utils/utils.hpp"
 
 namespace tt::inline v1 {
@@ -117,10 +117,16 @@ namespace tt::inline v1 {
         [[nodiscard]] constexpr auto unravel_index(SizeType index) const -> IndexType;
 
         // Iterators
-        constexpr auto begin() -> typename ContainerType::iterator;
-        constexpr auto begin() const -> typename ContainerType::const_iterator;
-        constexpr auto end() -> typename ContainerType::iterator;
-        constexpr auto end() const -> typename ContainerType::const_iterator;
+        constexpr auto stlbegin();
+        constexpr auto stlbegin() const;
+        constexpr auto stlend() -> typename ContainerType::iterator;
+        constexpr auto stlend() const -> typename ContainerType::const_iterator;
+
+        constexpr auto begin() -> StridedIterImpl<ValueType>;
+        constexpr auto begin() const -> StridedIterImpl<const ValueType>;
+        constexpr auto end() -> StridedIterImpl<ValueType>;
+        constexpr auto end() const -> StridedIterImpl<const ValueType>;
+
         auto shape_iter() -> ShapeIter;
         auto strided_iter() -> StridedIter<ValueType>;
 

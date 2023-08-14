@@ -43,16 +43,13 @@ namespace tt::inline v1 {
         return idx;
     }
 
-    constexpr auto ravel_unravel(int64_t flat_index, const std::vector<int64_t>& strides,
-                                 const std::vector<int64_t>& canon_strides) -> int64_t {
-        if (strides == canon_strides) {
-            return flat_index;
-        }
+    constexpr inline auto ravel_unravel(int64_t flat_index, const std::vector<int64_t>& strides,
+                                        const std::vector<int64_t>& canon_strides) noexcept -> int64_t {
         int64_t idx = 0;
         for (size_t i = 0; i < strides.size(); ++i) {
-            std::ldiv_t result = std::div(flat_index, canon_strides[i]);
-            idx += result.quot * strides[i];
-            flat_index = result.rem;
+            auto [quot, rem] = std::div(flat_index, canon_strides[i]);
+            idx += quot * strides[i];
+            flat_index = rem;
         }
 
         return idx;

@@ -408,7 +408,8 @@ TEST_CASE("Benchmark Iter", "[Tensor]") {
     };
 
     BENCHMARK("Flat") {
-        for (SizeType i = 0; i < ten.numel(); i++) {
+        const SizeType numel = ten.numel();
+        for (SizeType i = 0; i < numel; i++) {
             ten.flat(i) = i;
         }
     };
@@ -451,21 +452,28 @@ TEST_CASE("Data iterators", "[Tensor]") {
 TEST_CASE("Data iterators2", "[Tensor]") {
     auto ten2 = Tensor<int>::iota({100, 100, 100});
     BENCHMARK("Iter write, STL range") {
-        for (auto& val : ten2) {
-            val = xoshiro128_p();
-        }
+        std::transform(ten2.stlbegin(), ten2.stlend(), ten2.stlbegin(), [](auto& val) { return xoshiro128_p(); });
     };
 
     BENCHMARK("Iter write, Strided range, (unstrided)") {
-        for (auto& val : ten2) {
-            val = xoshiro128_p();
-        }
+        std::transform(ten2.begin(), ten2.end(), ten2.begin(), [](auto& val) { return xoshiro128_p(); });
     };
 
     ten2.permute_({1, 0, 2});
     BENCHMARK("Iter write, Strided range, (strided)") {
-        for (auto& val : ten2.strided_iter()) {
-            val = xoshiro128_p();
-        }
+        std::transform(ten2.begin(), ten2.end(), ten2.begin(), [](auto& val) { return xoshiro128_p(); });
+    };
+
+    auto ten3 = Tensor<float>::iota({200, 200, 200});
+    auto ten4 = Tensor<float>::iota({200, 200, 200});
+    BENCHMARK("Iter sum, unstrided") {
+        auto sum = ten3 + ten4;
+    };
+
+    ten3.permute_({1, 0, 2});
+    ten4.permute_({2, 1, 0});
+
+    BENCHMARK("Iter sum, strided") {
+        auto sum = ten3 + ten4;
     };
 }

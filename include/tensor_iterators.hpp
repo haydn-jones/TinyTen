@@ -4,7 +4,27 @@
 
 namespace tt::inline v1 {
     template <typename T>
-    constexpr auto Tensor<T>::begin() -> typename Tensor::ContainerType::iterator {
+    constexpr auto Tensor<T>::begin() -> StridedIterImpl<T> {
+        return {&this->data_[0], 0, this->strides_, this->canon_strides_};
+    }
+
+    template <typename T>
+    constexpr auto Tensor<T>::begin() const -> StridedIterImpl<const T> {
+        return {&this->data_[0], 0, this->strides_, this->canon_strides_};
+    }
+
+    template <typename T>
+    constexpr auto Tensor<T>::end() -> StridedIterImpl<T> {
+        return {&this->data_[0], this->numel(), this->strides_, this->canon_strides_};
+    }
+
+    template <typename T>
+    constexpr auto Tensor<T>::end() const -> StridedIterImpl<const T> {
+        return {&this->data_[0], this->numel(), this->strides_, this->canon_strides_};
+    }
+
+    template <typename T>
+    constexpr auto Tensor<T>::stlbegin() {
         if (this->_is_contiguous()) {
             return this->data_.begin();
         } else {
@@ -13,7 +33,7 @@ namespace tt::inline v1 {
     }
 
     template <typename T>
-    constexpr auto Tensor<T>::begin() const -> typename Tensor::ContainerType::const_iterator {
+    constexpr auto Tensor<T>::stlbegin() const {
         if (this->_is_contiguous()) {
             return this->data_.cbegin();
         } else {
@@ -22,7 +42,7 @@ namespace tt::inline v1 {
     }
 
     template <typename T>
-    constexpr auto Tensor<T>::end() -> typename Tensor::ContainerType::iterator {
+    constexpr auto Tensor<T>::stlend() -> typename Tensor::ContainerType::iterator {
         if (this->_is_contiguous()) {
             return this->data_.end();
         } else {
@@ -31,7 +51,7 @@ namespace tt::inline v1 {
     }
 
     template <typename T>
-    constexpr auto Tensor<T>::end() const -> typename Tensor::ContainerType::const_iterator {
+    constexpr auto Tensor<T>::stlend() const -> typename Tensor::ContainerType::const_iterator {
         if (this->_is_contiguous()) {
             return this->data_.cend();
         } else {
