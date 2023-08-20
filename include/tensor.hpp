@@ -58,6 +58,7 @@ namespace tt::inline v1 {
 
         [[nodiscard]] constexpr auto shape() const noexcept -> const IndexType&;
         [[nodiscard]] constexpr auto shape(SizeType i) const -> SizeType;
+        [[nodiscard]] constexpr auto dim() const noexcept -> SizeType;
 
         [[nodiscard]] constexpr auto strides() const noexcept -> const IndexType&;
         [[nodiscard]] constexpr auto stride(int i) const -> SizeType;
@@ -96,13 +97,13 @@ namespace tt::inline v1 {
 
         template <typename... Args>
         constexpr auto operator()(Args... args) -> ValueType& {
-            assert(sizeof...(args) == this->shape_.size());
+            assert(sizeof...(args) == this->dim());
             return this->data_[tt::ravel_index({static_cast<SizeType>(args)...}, this->strides_)];
         }
 
         template <typename... Args>
         constexpr auto operator()(Args... args) const -> const ValueType& {
-            assert(sizeof...(args) == this->shape_.size());
+            assert(sizeof...(args) == this->dim());
             return this->data_[tt::ravel_index({static_cast<SizeType>(args)...}, this->strides_)];
         }
 
@@ -154,6 +155,7 @@ namespace tt::inline v1 {
         ////////////////////////////////////////////////////////////////////
         // Misc functions
         ////////////////////////////////////////////////////////////////////
+        constexpr auto static gather(Tensor& input, int64_t dim, Tensor<int64_t>& index) -> Tensor;
 
         template <typename U>
         constexpr auto astype() -> Tensor<U> {

@@ -5,9 +5,9 @@
 namespace tt::inline v1 {
     template <typename T>
     [[nodiscard]] constexpr auto Tensor<T>::numel() const noexcept -> SizeType {
-        if (this->shape_.empty() && this->data_.empty()) {
+        if ((this->dim() == 0) && this->data_.empty()) {
             return 0;
-        } else if (this->shape_.empty()) {
+        } else if (this->dim() == 0) {
             return 1;
         } else {
             return tt::cumprod(this->shape_);
@@ -21,10 +21,15 @@ namespace tt::inline v1 {
 
     template <typename T>
     [[nodiscard]] constexpr auto Tensor<T>::shape(SizeType i) const -> SizeType {
-        if (i >= this->shape_.size()) {
+        if (i >= this->dim()) {
             throw std::runtime_error("shape: index out of bounds");
         }
         return this->shape_[i];
+    }
+
+    template <typename T>
+    [[nodiscard]] constexpr auto Tensor<T>::dim() const noexcept -> SizeType {
+        return this->shape_.size();
     }
 
     template <typename T>

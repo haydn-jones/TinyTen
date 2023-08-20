@@ -22,13 +22,13 @@ namespace tt::inline v1 {
     // Indexing with vector
     template <typename T>
     constexpr auto Tensor<T>::operator()(const IndexType& indices) -> T& {
-        assert(indices.size() == this->shape_.size());
+        assert(indices.size() == this->dim());
         return this->data_[tt::ravel_index(indices, this->strides_)];
     }
 
     template <typename T>
     constexpr auto Tensor<T>::operator()(const IndexType& indices) const -> const T& {
-        assert(indices.size() == this->shape_.size());
+        assert(indices.size() == this->dim());
         return this->data_[tt::ravel_index(indices, this->strides_)];
     }
 

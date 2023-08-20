@@ -8,5 +8,6 @@
 #include "tensor_indexing.hpp"
 #include "tensor_iterators.hpp"
 #include "tensor_metadata.hpp"
+#include "tensor_scatter_gather.hpp"
 
 // clang-format on

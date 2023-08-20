@@ -72,6 +72,7 @@
         "fstream": "cpp",
         "regex": "cpp",
         "*.ipp": "cpp",
-        "execution": "cpp"
+        "execution": "cpp",
+        "stop_token": "cpp"
     }
 }
