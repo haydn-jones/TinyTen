@@ -9,6 +9,9 @@
 namespace tt::inline v1 {
     template <typename T>
     constexpr inline auto cumprod(const std::vector<T>& v) -> T {
+        if (v.empty()) {
+            return 0;
+        }
         return std::reduce(v.begin(), v.end(), 1, std::multiplies<T>());
     }
 
@@ -24,29 +27,8 @@ namespace tt::inline v1 {
         return result;
     }
 
-    constexpr inline auto ravel_index(const std::vector<int64_t>& indices, const std::vector<int64_t>& strides)
-        -> int64_t {
-        if (indices.size() != strides.size()) {
-            throw std::runtime_error("ravel_index: size mismatch");
-        }
-        // Dot product (this is faster than inner_product, can be vectorized though who knows if it will be)
-        return std::transform_reduce(indices.begin(), indices.end(), strides.begin(), static_cast<int64_t>(0),
-                                     std::plus<>(), std::multiplies<>());
-    }
-
-    inline auto unravel_index(int64_t flat_index, const std::vector<int64_t>& strides) -> std::vector<int64_t> {
-        std::vector<int64_t> idx(strides.size());
-        std::transform(
-            strides.begin(), strides.end(), idx.begin(), [&flat_index](int64_t stride) constexpr {
-                int64_t idx = flat_index / stride;
-                flat_index %= stride;
-                return idx;
-            });
-        return idx;
-    }
-
-    constexpr inline auto ravel_unravel(int64_t flat_index, const std::vector<int64_t>& strides,
-                                        const std::vector<int64_t>& canon_strides) noexcept -> int64_t {
+    static constexpr inline auto ravel_unravel(int64_t flat_index, const std::vector<int64_t>& strides,
+                                               const std::vector<int64_t>& canon_strides) noexcept -> int64_t {
         int64_t idx = 0;
         for (size_t i = 0; i < strides.size(); ++i) {
             auto [quot, rem] = std::div(flat_index, canon_strides[i]);
@@ -57,7 +39,7 @@ namespace tt::inline v1 {
         return idx;
     }
 
-    auto _calc_strides(const std::vector<int64_t>& shape) -> std::vector<int64_t> {
+    static auto calc_strides(const std::vector<int64_t>& shape) -> std::vector<int64_t> {
         std::vector<int64_t> strides(shape.size(), 1);
         auto N = static_cast<int64_t>(shape.size());
         for (int64_t i = N - 2; i >= 0; --i) {
@@ -65,4 +47,31 @@ namespace tt::inline v1 {
         }
         return strides;
     }
+
+    static constexpr inline auto ravel_index(const std::vector<int64_t>& indices, const std::vector<int64_t>& strides)
+        -> int64_t {
+        if (indices.size() != strides.size()) {
+            throw std::runtime_error("ravel_index: size mismatch");
+        }
+        // Dot product (this is faster than inner_product, can be vectorized though who knows if it will be)
+        return std::transform_reduce(indices.begin(), indices.end(), strides.begin(), static_cast<int64_t>(0),
+                                     std::plus<>(), std::multiplies<>());
+    }
+
+    static inline auto unravel_index(int64_t flat_index, const std::vector<int64_t>& strides) -> std::vector<int64_t> {
+        std::vector<int64_t> idx(strides.size());
+        // std::transform(
+        //     strides.begin(), strides.end(), idx.begin(), [&flat_index](int64_t stride) constexpr {
+        //         int64_t idx = flat_index / stride;
+        //         flat_index %= stride;
+        //         return idx;
+        //     });
+        for (size_t i = 0; i < strides.size(); ++i) {
+            auto [quot, rem] = std::div(flat_index, strides[i]);
+            idx[i] = quot;
+            flat_index = rem;
+        }
+        return idx;
+    }
+
 }  // namespace tt::inline v1

@@ -7,7 +7,7 @@
 #include "operators.hpp"
 #include "tensor_indexing.hpp"
 #include "tensor_iterators.hpp"
-#include "tensor_metadata.hpp"
 #include "tensor_scatter_gather.hpp"
+#include "types.hpp"
 
 // clang-format on

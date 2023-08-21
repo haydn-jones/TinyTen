@@ -9,14 +9,13 @@
 #include <vector>
 
 #include "concepts.hpp"
+#include "tensor_indexer.hpp"
+#include "types.hpp"
 #include "utils/ShapeIterator.hpp"
 #include "utils/TensorIterator.hpp"
 #include "utils/utils.hpp"
 
 namespace tt::inline v1 {
-    using SizeType = int64_t;
-    using IndexType = std::vector<int64_t>;
-
     template <typename T>
     class Tensor {
       public:
@@ -26,11 +25,10 @@ namespace tt::inline v1 {
         ////////////////////////////////////////////////////////////////////
         // Constructors
         ////////////////////////////////////////////////////////////////////
-        Tensor() = default;
+        Tensor() : indexer_(TensorIndexer<T>::contigous({})) {}
 
-        Tensor(IndexType shape) : shape_(std::move(shape)) {
-            this->_calc_strides();
-            this->data_.resize(this->numel());
+        Tensor(IndexType shape) : indexer_(TensorIndexer<T>::contigous(shape)) {
+            this->data_.resize(this->indexer_.numel());
         }
 
         Tensor(const IndexType shape, const ValueType& value) : Tensor(shape) {
@@ -54,21 +52,42 @@ namespace tt::inline v1 {
             return tensor;
         }
 
-        [[nodiscard]] constexpr auto numel() const noexcept -> SizeType;
+        [[nodiscard]] constexpr auto numel() const noexcept -> SizeType {
+            return this->indexer_.numel();
+        }
 
-        [[nodiscard]] constexpr auto shape() const noexcept -> const IndexType&;
-        [[nodiscard]] constexpr auto shape(SizeType i) const -> SizeType;
-        [[nodiscard]] constexpr auto dim() const noexcept -> SizeType;
+        [[nodiscard]] constexpr auto shape() const noexcept -> const IndexType& {
+            return this->indexer_.shape();
+        }
+        [[nodiscard]] constexpr auto shape(SizeType i) const -> SizeType {
+            return this->indexer_.shape(i);
+        }
 
-        [[nodiscard]] constexpr auto strides() const noexcept -> const IndexType&;
-        [[nodiscard]] constexpr auto stride(int i) const -> SizeType;
+        [[nodiscard]] constexpr auto dim() const noexcept -> SizeType {
+            return this->indexer_.dim();
+        }
+
+        [[nodiscard]] constexpr auto strides() const noexcept -> const IndexType& {
+            return this->indexer_.strides();
+        }
+
+        [[nodiscard]] constexpr auto stride(int i) const -> SizeType {
+            return this->indexer_.stride(i);
+        }
+
+        [[nodiscard]] constexpr auto _is_contiguous() const -> bool {
+            return this->indexer_._is_contiguous();
+        }
 
         constexpr void reshape_(const IndexType& shape) {
             if (cumprod(shape) != this->numel()) {
                 throw std::runtime_error("reshape: total size of new array must be unchanged");
             }
-            this->shape_ = shape;
-            this->_calc_strides();
+            // right now we cannot reshape a non-contiguous tensor
+            if (!this->_is_contiguous()) {
+                throw std::runtime_error("reshape: tensor is not contiguous");
+            }
+            this->indexer_ = TensorIndexer<T>(shape, tt::calc_strides(shape), tt::calc_strides(shape));
         }
 
         constexpr auto reshape(const IndexType& shape) const -> Tensor {
@@ -78,9 +97,9 @@ namespace tt::inline v1 {
         }
 
         constexpr auto permute_(const IndexType& axes) {
-            this->shape_ = permute_vec(this->shape_, axes);
-            this->strides_ = permute_vec(this->strides_, axes);
-            this->canon_strides_ = tt::_calc_strides(this->shape_);
+            auto shape = permute_vec(this->indexer_.shape(), axes);
+            auto stride = permute_vec(this->indexer_.strides(), axes);
+            this->indexer_ = TensorIndexer<T>(shape, stride, tt::calc_strides(shape));
         }
 
         constexpr auto permute(const IndexType& axes) const -> Tensor {
@@ -95,21 +114,21 @@ namespace tt::inline v1 {
         constexpr auto operator()(const IndexType& indices) -> ValueType&;
         constexpr auto operator()(const IndexType& indices) const -> const ValueType&;
 
-        template <typename... Args>
-        constexpr auto operator()(Args... args) -> ValueType& {
-            assert(sizeof...(args) == this->dim());
-            return this->data_[tt::ravel_index({static_cast<SizeType>(args)...}, this->strides_)];
+        template <std::convertible_to<SizeType>... I>
+        constexpr auto operator()(I... i) -> ValueType& {
+            IndexType indices{static_cast<SizeType>(i)...};
+            return this->data_[tt::ravel_index(indices, this->indexer_.strides())];
         }
 
-        template <typename... Args>
-        constexpr auto operator()(Args... args) const -> const ValueType& {
-            assert(sizeof...(args) == this->dim());
-            return this->data_[tt::ravel_index({static_cast<SizeType>(args)...}, this->strides_)];
+        template <std::convertible_to<SizeType>... I>
+        constexpr auto operator()(I... i) const -> const ValueType& {
+            IndexType indices{static_cast<SizeType>(i)...};
+            return this->data_[tt::ravel_index(indices, this->indexer_.strides())];
         }
 
-        template <typename... Args>
-        constexpr auto ravel_index(Args... args) const -> SizeType {
-            IndexType indices{static_cast<SizeType>(args)...};
+        template <std::convertible_to<SizeType>... I>
+        constexpr auto ravel_index(I... i) const -> SizeType {
+            IndexType indices{static_cast<SizeType>(i)...};
             return this->ravel_index(indices);
         }
 
@@ -159,7 +178,7 @@ namespace tt::inline v1 {
 
         template <typename U>
         constexpr auto astype() -> Tensor<U> {
-            Tensor<U> res(this->shape_, this->strides_);
+            Tensor<U> res(this->indexer_.shape_, this->indexer_.strides_);
             std::transform(
                 this->begin(), this->end(), res.begin(), [](T & x) constexpr { return static_cast<U>(x); });
             return res;
@@ -175,25 +194,14 @@ namespace tt::inline v1 {
         }
 
       private:
+        TensorIndexer<T> indexer_;
         ContainerType data_;
-        IndexType shape_;
-
-        // True strides
-        IndexType strides_;
-        IndexType canon_strides_;
 
         template <typename U>
         friend class Tensor;
 
         Tensor(const IndexType& dimensions, const IndexType& strides) : Tensor(dimensions) {
-            this->strides_ = strides;
+            this->indexer_.strides_ = strides;
         }
-
-        constexpr void _calc_strides() {
-            this->strides_ = tt::_calc_strides(this->shape_);
-            this->canon_strides_ = this->strides_;
-        }
-
-        [[nodiscard]] constexpr auto _is_contiguous() const -> bool;
     };
 };  // namespace tt::inline v1

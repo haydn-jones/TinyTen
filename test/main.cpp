@@ -28,6 +28,14 @@ TEST_CASE("Tensor operations", "[Tensor]") {
         TensorType tensor({4, 4, 4});
         tensor({1, 2, 3}) = 10;
         REQUIRE(tensor({1, 2, 3}) == 10);
+
+        auto tensor2 = TensorType::iota({3});
+        REQUIRE(tensor2(0) == 0);
+        REQUIRE(tensor2(1) == 1);
+        REQUIRE(tensor2(2) == 2);
+        REQUIRE(tensor2({0}) == 0);
+        REQUIRE(tensor2({1}) == 1);
+        REQUIRE(tensor2({2}) == 2);
     }
 
     SECTION("iteration should work correctly") {

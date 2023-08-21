@@ -5,28 +5,28 @@
 namespace tt::inline v1 {
     template <typename T>
     constexpr auto Tensor<T>::begin() -> StridedIterImpl<T> {
-        return {&this->data_[0], 0, this->strides_, this->canon_strides_};
+        return this->indexer_.begin(this->data_);
     }
 
     template <typename T>
     constexpr auto Tensor<T>::begin() const -> StridedIterImpl<const T> {
-        return {&this->data_[0], 0, this->strides_, this->canon_strides_};
+        return this->indexer_.begin(this->data_);
     }
 
     template <typename T>
     constexpr auto Tensor<T>::end() -> StridedIterImpl<T> {
-        return {&this->data_[0], this->numel(), this->strides_, this->canon_strides_};
+        return this->indexer_.end(this->data_);
     }
 
     template <typename T>
     constexpr auto Tensor<T>::end() const -> StridedIterImpl<const T> {
-        return {&this->data_[0], this->numel(), this->strides_, this->canon_strides_};
+        return this->indexer_.end(this->data_);
     }
 
     template <typename T>
     constexpr auto Tensor<T>::stlbegin() {
         if (this->_is_contiguous()) {
-            return this->data_.begin();
+            return this->indexer_.stlbegin(this->data_);
         } else {
             throw std::runtime_error("begin: tensor is not contiguous");
         }
@@ -35,7 +35,7 @@ namespace tt::inline v1 {
     template <typename T>
     constexpr auto Tensor<T>::stlbegin() const {
         if (this->_is_contiguous()) {
-            return this->data_.cbegin();
+            return this->indexer_.stlbegin(this->data_);
         } else {
             throw std::runtime_error("begin: tensor is not contiguous");
         }
@@ -44,7 +44,7 @@ namespace tt::inline v1 {
     template <typename T>
     constexpr auto Tensor<T>::stlend() -> typename Tensor::ContainerType::iterator {
         if (this->_is_contiguous()) {
-            return this->data_.end();
+            return this->indexer_.stlend(this->data_);
         } else {
             throw std::runtime_error("end: tensor is not contiguous");
         }
@@ -53,7 +53,7 @@ namespace tt::inline v1 {
     template <typename T>
     constexpr auto Tensor<T>::stlend() const -> typename Tensor::ContainerType::const_iterator {
         if (this->_is_contiguous()) {
-            return this->data_.cend();
+            return this->indexer_.stlend(this->data_);
         } else {
             throw std::runtime_error("end: tensor is not contiguous");
         }
@@ -61,11 +61,11 @@ namespace tt::inline v1 {
 
     template <typename T>
     auto Tensor<T>::shape_iter() -> ShapeIter {
-        return ShapeIter(this->numel(), this->canon_strides_);
+        return this->indexer_.shape_iter();
     }
 
     template <typename T>
     auto Tensor<T>::strided_iter() -> StridedIter<T> {
-        return StridedIter<T>(&this->data_[0], this->numel(), this->strides_, this->canon_strides_);
+        return this->indexer_.strided_iter(this->data_);
     }
 };  // namespace tt::inline v1
