@@ -40,4 +40,25 @@ namespace tt::inline v1 {
     constexpr auto Tensor<T>::unravel_index(SizeType index) const -> IndexType {
         return tt::unravel_index(index, this->indexer_.canon_strides_);
     }
+
+    template <typename T>
+    template <std::convertible_to<SizeType>... I>
+    constexpr auto Tensor<T>::operator()(I... i) -> ValueType& {
+        IndexType indices{static_cast<SizeType>(i)...};
+        return this->data_[tt::ravel_index(indices, this->indexer_.strides())];
+    }
+
+    template <typename T>
+    template <std::convertible_to<SizeType>... I>
+    constexpr auto Tensor<T>::operator()(I... i) const -> const ValueType& {
+        IndexType indices{static_cast<SizeType>(i)...};
+        return this->data_[tt::ravel_index(indices, this->indexer_.strides())];
+    }
+
+    template <typename T>
+    template <std::convertible_to<SizeType>... I>
+    constexpr auto Tensor<T>::ravel_index(I... i) const -> SizeType {
+        IndexType indices{static_cast<SizeType>(i)...};
+        return this->ravel_index(indices);
+    }
 };  // namespace tt::inline v1

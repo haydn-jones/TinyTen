@@ -60,17 +60,12 @@ namespace tt::inline v1 {
 
     static inline auto unravel_index(int64_t flat_index, const std::vector<int64_t>& strides) -> std::vector<int64_t> {
         std::vector<int64_t> idx(strides.size());
-        // std::transform(
-        //     strides.begin(), strides.end(), idx.begin(), [&flat_index](int64_t stride) constexpr {
-        //         int64_t idx = flat_index / stride;
-        //         flat_index %= stride;
-        //         return idx;
-        //     });
-        for (size_t i = 0; i < strides.size(); ++i) {
-            auto [quot, rem] = std::div(flat_index, strides[i]);
-            idx[i] = quot;
-            flat_index = rem;
-        }
+        std::transform(
+            strides.begin(), strides.end(), idx.begin(), [&flat_index](int64_t stride) constexpr {
+                int64_t idx = flat_index / stride;
+                flat_index %= stride;
+                return idx;
+            });
         return idx;
     }
 

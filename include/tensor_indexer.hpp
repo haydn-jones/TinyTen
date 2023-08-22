@@ -1,5 +1,7 @@
 #pragma once
 
+#include <utility>
+
 #include "types.hpp"
 #include "utils/ShapeIterator.hpp"
 #include "utils/TensorIterator.hpp"
@@ -13,8 +15,8 @@ namespace tt::inline v1 {
         IndexType strides_;
         IndexType canon_strides_;
 
-        TensorIndexer(const IndexType& shape, const IndexType& strides, const IndexType& canon_strides)
-            : shape_(shape), strides_(strides), canon_strides_(canon_strides) {}
+        TensorIndexer(IndexType shape, IndexType strides, IndexType canon_strides)
+            : shape_(std::move(shape)), strides_(std::move(strides)), canon_strides_(std::move(canon_strides)) {}
 
         static auto contigous(const IndexType& shape) -> TensorIndexer {
             IndexType strides = tt::calc_strides(shape);
@@ -56,7 +58,7 @@ namespace tt::inline v1 {
             return {&data[0], 0, this->strides_, this->canon_strides_};
         }
 
-        constexpr auto begin(const std::vector<T>& data) const -> StridedIterImpl<const T> {
+        [[nodiscard]] constexpr auto begin(const std::vector<T>& data) const -> StridedIterImpl<const T> {
             return {&data[0], 0, this->strides_, this->canon_strides_};
         }
 
@@ -64,7 +66,7 @@ namespace tt::inline v1 {
             return {&data[0], this->numel(), this->strides_, this->canon_strides_};
         }
 
-        constexpr auto end(const std::vector<T>& data) const -> StridedIterImpl<const T> {
+        [[nodiscard]] constexpr auto end(const std::vector<T>& data) const -> StridedIterImpl<const T> {
             return {&data[0], this->numel(), this->strides_, this->canon_strides_};
         }
 

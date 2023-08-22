@@ -90,7 +90,7 @@ namespace tt::inline v1 {
             this->indexer_ = TensorIndexer<T>(shape, tt::calc_strides(shape), tt::calc_strides(shape));
         }
 
-        constexpr auto reshape(const IndexType& shape) const -> Tensor {
+        [[nodiscard]] constexpr auto reshape(const IndexType& shape) const -> Tensor {
             Tensor tensor(*this);
             tensor.reshape_(shape);
             return tensor;
@@ -102,35 +102,26 @@ namespace tt::inline v1 {
             this->indexer_ = TensorIndexer<T>(shape, stride, tt::calc_strides(shape));
         }
 
-        constexpr auto permute(const IndexType& axes) const -> Tensor {
+        [[nodiscard]] constexpr auto permute(const IndexType& axes) const -> Tensor {
             Tensor tensor(*this);
             tensor.permute_(axes);
             return tensor;
         }
 
         constexpr auto flat(SizeType i) -> ValueType&;
-        constexpr auto flat(SizeType i) const -> const ValueType&;
+        [[nodiscard]] constexpr auto flat(SizeType i) const -> const ValueType&;
 
         constexpr auto operator()(const IndexType& indices) -> ValueType&;
         constexpr auto operator()(const IndexType& indices) const -> const ValueType&;
 
         template <std::convertible_to<SizeType>... I>
-        constexpr auto operator()(I... i) -> ValueType& {
-            IndexType indices{static_cast<SizeType>(i)...};
-            return this->data_[tt::ravel_index(indices, this->indexer_.strides())];
-        }
+        constexpr auto operator()(I... i) -> ValueType&;
 
         template <std::convertible_to<SizeType>... I>
-        constexpr auto operator()(I... i) const -> const ValueType& {
-            IndexType indices{static_cast<SizeType>(i)...};
-            return this->data_[tt::ravel_index(indices, this->indexer_.strides())];
-        }
+        constexpr auto operator()(I... i) const -> const ValueType&;
 
         template <std::convertible_to<SizeType>... I>
-        constexpr auto ravel_index(I... i) const -> SizeType {
-            IndexType indices{static_cast<SizeType>(i)...};
-            return this->ravel_index(indices);
-        }
+        constexpr auto ravel_index(I... i) const -> SizeType;
 
         [[nodiscard]] constexpr auto ravel_index(const IndexType& indices) const -> SizeType;
 
@@ -138,14 +129,14 @@ namespace tt::inline v1 {
 
         // Iterators
         constexpr auto stlbegin();
-        constexpr auto stlbegin() const;
+        [[nodiscard]] constexpr auto stlbegin() const;
         constexpr auto stlend() -> typename ContainerType::iterator;
-        constexpr auto stlend() const -> typename ContainerType::const_iterator;
+        [[nodiscard]] constexpr auto stlend() const -> typename ContainerType::const_iterator;
 
         constexpr auto begin() -> StridedIterImpl<ValueType>;
-        constexpr auto begin() const -> StridedIterImpl<const ValueType>;
+        [[nodiscard]] constexpr auto begin() const -> StridedIterImpl<const ValueType>;
         constexpr auto end() -> StridedIterImpl<ValueType>;
-        constexpr auto end() const -> StridedIterImpl<const ValueType>;
+        [[nodiscard]] constexpr auto end() const -> StridedIterImpl<const ValueType>;
 
         auto shape_iter() -> ShapeIter;
         auto strided_iter() -> StridedIter<ValueType>;
@@ -154,22 +145,22 @@ namespace tt::inline v1 {
         // Trigonometric functions
         ////////////////////////////////////////////////////////////////////
         constexpr auto sin_() -> Tensor& requires SupportsSin<ValueType>;
-        constexpr auto sin() const -> Tensor;
+        [[nodiscard]] constexpr auto sin() const -> Tensor;
 
         constexpr auto cos_() -> Tensor& requires SupportsCos<ValueType>;
-        constexpr auto cos() const -> Tensor;
+        [[nodiscard]] constexpr auto cos() const -> Tensor;
 
         constexpr auto tan_() -> Tensor& requires SupportsTan<ValueType>;
-        constexpr auto tan() const -> Tensor;
+        [[nodiscard]] constexpr auto tan() const -> Tensor;
 
         constexpr auto cot_() -> Tensor& requires SupportsCot<ValueType>;
-        constexpr auto cot() const -> Tensor;
+        [[nodiscard]] constexpr auto cot() const -> Tensor;
 
         constexpr auto sec_() -> Tensor& requires SupportsSec<ValueType>;
-        constexpr auto sec() const -> Tensor;
+        [[nodiscard]] constexpr auto sec() const -> Tensor;
 
         constexpr auto csc_() -> Tensor& requires SupportsCsc<ValueType>;
-        constexpr auto csc() const -> Tensor;
+        [[nodiscard]] constexpr auto csc() const -> Tensor;
 
         ////////////////////////////////////////////////////////////////////
         // Misc functions
